@@ -1,26 +1,16 @@
 <PAMDataset>
   <PAMRasterBand band="1">
     <Description>ClassName</Description>
-    <Histograms>
-      <HistItem>
-        <HistMin>1100</HistMin>
-        <HistMax>9113</HistMax>
-        <BucketCount>256</BucketCount>
-        <IncludeOutOfRange>1</IncludeOutOfRange>
-        <Approximate>0</Approximate>
-        <HistCounts>112112950|0|0|269545181|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|17003243|0|0|64268327|0|0|0|0|0|156580236|0|0|0|5461370|0|0|0|0|0|3957149|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|43184001|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|146437487|0|0|0|0|0|0|0|0|0|21662365|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|34367822|0|0|0|0|0|854322804|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|124101756|0|0|0|0|0|0|0|0|71144065|16643940|0|0|0|0|0|403051|0|0|0|0|0|0|0|0|0|0|0|0|0|0|93118|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|206194780</HistCounts>
-      </HistItem>
-    </Histograms>
-    <GDALRasterAttributeTable>
+    <GDALRasterAttributeTable tableType="thematic">
       <FieldDefn index="0">
         <Name>Value</Name>
-        <Type>0</Type>
-        <Usage>0</Usage>
+        <Type typeAsString="Integer">0</Type>
+        <Usage usageAsString="Generic">0</Usage>
       </FieldDefn>
       <FieldDefn index="1">
         <Name>ClassName</Name>
-        <Type>2</Type>
-        <Usage>0</Usage>
+        <Type typeAsString="String">2</Type>
+        <Usage usageAsString="Generic">0</Usage>
       </FieldDefn>
       <Row index="0">
         <F>1100</F>
@@ -107,16 +97,5 @@
         <F>Subtidal - Seagrass</F>
       </Row>
     </GDALRasterAttributeTable>
-    <Metadata>
-      <MDI key="DESCRIPTION">ClassName</MDI>
-      <MDI key="STATISTICS_COVARIANCES">5387368.862169063</MDI>
-      <MDI key="STATISTICS_EXCLUDEDVALUES"></MDI>
-      <MDI key="STATISTICS_MAXIMUM">9113</MDI>
-      <MDI key="STATISTICS_MEAN">4553.957871161</MDI>
-      <MDI key="STATISTICS_MINIMUM">1100</MDI>
-      <MDI key="STATISTICS_SKIPFACTORX">1</MDI>
-      <MDI key="STATISTICS_SKIPFACTORY">1</MDI>
-      <MDI key="STATISTICS_STDDEV">2321.0706284319</MDI>
-    </Metadata>
   </PAMRasterBand>
 </PAMDataset>

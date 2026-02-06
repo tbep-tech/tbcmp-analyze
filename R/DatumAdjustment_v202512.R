@@ -21,34 +21,34 @@ ifFieldExists <- function(input_data, field_name) {
 # ==============================================================================
 
 DatumAdjustment_v202512 <- function(
-    Datums = "D:/gis/TBEP/TBCMP/Datum_StPete_NAVD88.dbf",
+    Datums = "./data-raw/tbep/Datum_StPete_NAVD88.csv",
     OutY = 2025,
     SLR_row = NULL
 ) {
-  
+
   # Configuration
   Topo_Year_SLR <- 0
-  
+
   # Read Datums table
   if (is.character(Datums)) {
     datums_data <- read.dbf(Datums)
   } else {
     datums_data <- Datums
   }
-  
+
   # Get SLR value from SLR_row
   # Assuming SLR_row has a column with SLR values
   # Common column names: SLR, SLR_m, SeaLevelRise, etc.
   slr_col_names <- c("SLR", "SLR_m", "SeaLevelRise", "Rise")
   SLR <- NULL
-  
+
   for (col_name in slr_col_names) {
     if (col_name %in% names(SLR_row)) {
       SLR <- SLR_row[[col_name]]
       break
     }
   }
-  
+
   if (is.null(SLR)) {
     # If no SLR column found, try to use any numeric column after Year
     numeric_cols <- names(SLR_row)[sapply(SLR_row, is.numeric)]
@@ -60,19 +60,19 @@ DatumAdjustment_v202512 <- function(
       stop("Could not find SLR value in SLR_row")
     }
   }
-  
+
   # Create new field name
   field_name <- paste0("Dat_", OutY)
-  
+
   # Check if field exists
   output_value <- ifFieldExists(datums_data, field_name)
-  
+
   # Add field if it doesn't exist
   if (output_value) {
     cat(sprintf("Adding field: %s\n", field_name))
     datums_data[[field_name]] <- NA
   }
-  
+
   # Calculate adjusted datum values
   # Formula: DatumEleva + SLR - Topo_Year_SLR
   if ("DatumEleva" %in% names(datums_data)) {
@@ -82,7 +82,7 @@ DatumAdjustment_v202512 <- function(
   } else {
     stop("Could not find elevation column in Datums table")
   }
-  
+
   # Extract individual datum values
   # Assuming there's a 'Datum' column with datum names
   datum_col <- NULL
@@ -95,7 +95,7 @@ DatumAdjustment_v202512 <- function(
   } else {
     stop("Could not find datum type column in Datums table")
   }
-  
+
   # Extract values for each datum type
   HAT_SLR <- datums_data[[field_name]][datums_data[[datum_col]] == "HAT"]
   MHHW_SLR <- datums_data[[field_name]][datums_data[[datum_col]] == "MHHW"]
@@ -104,7 +104,7 @@ DatumAdjustment_v202512 <- function(
   MHW_SLR <- datums_data[[field_name]][datums_data[[datum_col]] == "MHW"]
   MLW_SLR <- datums_data[[field_name]][datums_data[[datum_col]] == "MLW"]
   MLLW_SLR <- datums_data[[field_name]][datums_data[[datum_col]] == "MLLW"]
-  
+
   # Handle cases where datum might not be found
   if (length(HAT_SLR) == 0) HAT_SLR <- NA
   if (length(MHHW_SLR) == 0) MHHW_SLR <- NA
@@ -113,7 +113,7 @@ DatumAdjustment_v202512 <- function(
   if (length(MHW_SLR) == 0) MHW_SLR <- NA
   if (length(MLW_SLR) == 0) MLW_SLR <- NA
   if (length(MLLW_SLR) == 0) MLLW_SLR <- NA
-  
+
   # Return results as a list
   results <- list(
     HAT_SLR = HAT_SLR,
@@ -125,6 +125,6 @@ DatumAdjustment_v202512 <- function(
     MLLW_SLR = MLLW_SLR,
     adjusted_datums = datums_data
   )
-  
+
   return(results)
 }
