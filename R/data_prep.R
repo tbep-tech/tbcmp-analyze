@@ -5,8 +5,12 @@ library(tbeptools)
 library(tidycensus)
 library(tidyverse)
 library(terra)
+library(exactextractr)
+library(tmap)
 #library(future)
 #plan(multisession)
+
+num_cores <- detectCores() - 1
 
 ##Download base files for prepping project area extent and existing conditions
 
@@ -107,9 +111,10 @@ hem_class <- read_csv(file = here('data/hem_class_colors.csv')) |>
              select(Value, ClassName)
 
 hem_color <- read_csv(file = here('data/hem_class_colors.csv')) |>
-             select(Value, color_hex)
+             distinct(ClassName, color_hex) |>
+             select(color_hex)
 
-hem_colors <- c('#FF7F7F', '#FFBEBE', '#E1E1E1', '#73DFFF', '#BEE8FF', '#FFFF73', '#55FF00', '#737300', '#FFAA00', '#FFD37F', '#267300')
+#hem_colors <- c('#FF7F7F', '#FFBEBE', '#E1E1E1', '#73DFFF', '#BEE8FF', '#FFFF73', '#55FF00', '#737300', '#FFAA00', '#FFD37F', '#267300')
 
 levels(tbcmp_hem_filled) <- hem_class
 #coltab(tbcmp_hem_filled) <- hem_color       #Not working to embed colors in raster
@@ -118,7 +123,36 @@ writeRaster(tbcmp_hem_filled, filename = here('data/tbcmp_hem_filled.tif'), over
 
 tbcmp_hem_filled <- rast(here('data/tbcmp_hem_filled.tif'))
 
-plot(tbcmp_hem_filled, col=hem_colors)              #View the pretty habitat/veg base layer
+tm_shape(tbcmp_hem_filled) +
+  tm_raster(col = "ClassName", palette = hem_color, title = "Land Use") +   #View the pretty habitat/veg base layer
+  tm_shape(tbcmp_cnt) +
+  tm_polygons(fill_alpha = 0) +
+  tm_layout(legend.outside = TRUE)
+
+hem_summary <- freq(tbcmp_hem_filled) |>
+               as.data.frame() |>
+               group_by(value) |>
+               summarise(sum = sum(count))
+
+county_list <- list()
+
+for (i in 1:nrow(tbcmp_cnt)) {
+          single_poly <- tbcmp_cnt[i, ]
+          r_sub <- crop(tbcmp_hem_filled, single_poly) |>
+                   mask(single_poly)
+          extracted <- exact_extract(r_sub, single_poly, fun = NULL, force_df = TRUE,
+                                     max_cells_in_memory = 3e+08)
+          county_list[[i]] <- data.frame(id = single_poly$county, extracted) |>
+                              unnest() |>
+                              group_by(id, value) |>
+                              summarise(count = sum(coverage_fraction, na.rm = T))
+          rm(extracted)
+          rm(r_sub)
+          gc()
+}
+
+county_summary <- do.call(rbind, county_list) |>
+                  mutate(acres = count * 0.000988422)
 
 #df <- as.data.frame(tbcmp_hem_filled, xy=TRUE)
 
@@ -158,7 +192,7 @@ fl_dem_m_aligned <- resample(fl_dem_m, tbcmp_raster, method="bilinear")
 
 #noaa_cudem_aligned <- resample(noaa_cudem_m, tbcmp_raster, method="bilinear")
 
-noaa_cudem_m <- rast("./data/tbcmp_hem_dem_original.tif")
+noaa_cudem_m <- rast("./data/originals/tbcmp_hem_dem_original.tif")
 noaa_cudem_aligned <- resample(noaa_cudem_m, tbcmp_raster, method="bilinear")
 
 tbcmp_dem <- cover(noaa_cudem_aligned, fl_dem_m_aligned)
