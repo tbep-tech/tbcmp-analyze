@@ -132,7 +132,8 @@ tm_shape(tbcmp_hem_filled) +
 hem_summary <- freq(tbcmp_hem_filled) |>
                as.data.frame() |>
                group_by(value) |>
-               summarise(sum = sum(count))
+               summarise(sum = sum(count)) |>
+               mutate(acres = sum * 0.000988422)
 
 county_list <- list()
 
