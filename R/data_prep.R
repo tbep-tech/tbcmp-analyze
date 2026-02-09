@@ -103,7 +103,7 @@ save(lulc23_sg24, file = here('data/lulc23_sg24_base.RData'), compress = 'xz')
 
 load(file = here('data/lulc23_sg24_base.RData'))
 
-tbcmp_hem <- rasterize(vect(lulc23_sg24), tbcmp_raster, field = "HEM_CODE", fun="max")
+tbcmp_hem <- rasterize(vect(lulc23_sg24), tbcmp_raster, field = "HEM_CODE", fun = max)
 
 tbcmp_hem_filled <- cover(tbcmp_hem, tbcmp_raster_GOM) #Filled null values for Gulf waters with HEM code 5400 (and a small portion of NW Citrus County with no LULC info)
 
@@ -121,7 +121,7 @@ levels(tbcmp_hem_filled) <- hem_class
 
 writeRaster(tbcmp_hem_filled, filename = here('data/tbcmp_hem_filled.tif'), overwrite = T, datatype = "INT2U", wopt = list(gdal = c("RAT=YES")))
 
-tbcmp_hem_filled <- rast(here('data/tbcmp_hem_filled.tif'))
+#tbcmp_hem_filled <- rast(here('data/tbcmp_hem_filled.tif'))
 
 tm_shape(tbcmp_hem_filled) +
   tm_raster(col = "ClassName", palette = hem_color, title = "Land Use") +   #View the pretty habitat/veg base layer
