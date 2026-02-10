@@ -81,11 +81,14 @@ sg2024 <- bind_rows(spsg2024, sg_dif) |>
 lu_dif <- st_difference(lulc2023, st_union(sg2024))
 
 #Get the FLUCCSCODE, HEM and SLAMM code crosswalk file previously made to perform next step.
-
+#add_data = data.frame(FLUCCSCODE = 6425, SLAMM_CODE = 6, HEM_CODE = 6425)
 #codes <- sf::st_read("T:/05_GIS/TBEP/TBCMP/TBCMP_TBEP_DATASETS.gdb", layer = "FINAL_FULL_EXTENT_DISSOLVED") |>
 #         st_drop_geometry() |>
 #         rename(HEM_CODE = HEM_Code) |>
-#         distinct(FLUCCSCODE,SLAMM_CODE,HEM_CODE)
+#         distinct(FLUCCSCODE,SLAMM_CODE,HEM_CODE) |>
+#         mutate(HEM_CODE = (case_when(FLUCCSCODE %in% c(6510, 7210, 9121, 9122) ~ 6510,   #Use a tidal flat code
+#                              TRUE ~ HEM_CODE))) |>
+#         bind_rows(add_data)                                       #Include missing Juncus Marsh code
 
 #save(codes, file = here('data/code_xwalk.Rdata'))
 
