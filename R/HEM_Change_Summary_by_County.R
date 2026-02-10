@@ -1,5 +1,7 @@
 library(here)
 library(tidyverse)
+library(flextable)
+library(ftExtra)
 
 # Set the directory path
 directory_path <- "./data/output/"
@@ -32,3 +34,49 @@ all_data <- csv_files |>
   group_by(county, land_policy, hem_category, yr) |>
   summarize(mean_acres = mean(acres),
             std_acres = sd(acres))
+
+# format for flextable
+totab <- all_data |> 
+  ungroup() |> 
+  mutate(
+    mean_acres = round(mean_acres, 0),
+    mean_acres = case_when(
+      !is.na(mean_acres) ~ format(mean_acres, big.mark = ",", scientific = FALSE), 
+      TRUE ~ NA_character_
+    ),
+    std_acres = round(std_acres, 0),
+    std_acres = case_when(
+      !is.na(std_acres) ~ format(std_acres, big.mark = ",", scientific = FALSE), 
+      TRUE ~ NA_character_
+    )
+  ) |>
+  unite("mean_std_acres", mean_acres, std_acres, sep = " ± ", na.rm = T) |>
+  unite('policy_yr', land_policy, yr, sep = "_") |>
+  mutate(
+    policy_yr = factor(policy_yr, levels = c('baseline_2025', 'PD_2050', 'AM_2050', 'PD_2080', 'AM_2080', 'PD_2100', 'AM_2100'))
+  ) |>
+  pivot_wider(names_from = policy_yr, values_from = mean_std_acres, names_sort = T, values_fill = "0") |> 
+  arrange(
+    county, hem_category
+  )
+
+# add flextable with extra header row for years
+totab |> 
+  filter(county == 'Citrus') |>
+  select(-county) |> 
+  flextable() |> 
+  add_header_row(values = c("", "", "2050", "2050", "2080", "2800", "2100", "2100")) |>
+  merge_at(i = 1, j = 3:4, part = 'header') |>
+  merge_at(i = 1, j = 5:6, part = 'header') |>
+  merge_at(i = 1, j = 7:8, part = 'header') |>
+  set_header_labels(
+    hem_category = "HEM Category",
+    baseline_2025 = "Baseline",
+    PD_2050 = "PD",
+    AM_2050 = "AM",
+    PD_2080 = "PD",
+    AM_2080 = "AM",
+    PD_2100 = "PD",
+    AM_2100 = "AM"
+  ) |> 
+  autofit()
