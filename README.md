@@ -1,5 +1,5 @@
 # ArcGIS to R Conversion: Habitat Evolution Model
-## Tampa Bay Coastal Management Program (TBCMP)
+## Tampa Bay Coastal Master Plan (TBCMP)
 
 ---
 
@@ -62,7 +62,6 @@ install.packages(c(
   "tidyverse",  # Data manipulation and piping
   "terra",      # Raster operations
   "sf",         # Vector operations
-  "foreign",    # Read .dbf files
   "dplyr"       # Data manipulation
 ))
 ```
@@ -348,7 +347,7 @@ gc()  # Garbage collection
 If using this code, please cite:
 
 ```
-Tampa Bay Coastal Management Program (TBCMP)
+Tampa Bay Coastal Master Plan (TBCMP)
 Habitat Evolution Model v202512
 Converted from ArcGIS to R, February 2026
 ```
@@ -374,6 +373,6 @@ For questions or issues:
 ## Acknowledgments
 
 - Original ArcGIS ModelBuilder: TBCMP Team
-- Conversion to R: [Your info]
-- Sea Level Rise Scenarios: [Data source]
-- Tidal Datum Data: [Data source]
+- Conversion to R: Ed Sherwood
+- Sea Level Rise Scenarios: [NOAA SLR Calculator](https://coast.noaa.gov/sealevelcalculator/)
+- Tidal Datum Data: [St. Petersburg, FL - Station ID = 8726520](https://tidesandcurrents.noaa.gov/stationhome.html?id=8726520)
