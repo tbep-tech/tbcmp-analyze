@@ -366,7 +366,7 @@ For questions or issues:
 
 ## License
 
-[Specify license here]
+[MIT License](https://github.com/tbep-tech/tbcmp-analyze/tree/main?tab=MIT-1-ov-file#)
 
 ---
 
