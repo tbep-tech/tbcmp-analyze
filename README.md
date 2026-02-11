@@ -342,6 +342,12 @@ gc()  # Garbage collection
 
 ---
 
+## Online Resources
+
+- [HEM Change Analysis by County](https://tbep-tech.github.io/tbcmp-analyze/hemchange.html)
+
+---
+
 ## Citation
 
 If using this code, please cite:
