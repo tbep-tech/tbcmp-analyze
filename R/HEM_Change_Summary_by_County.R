@@ -38,33 +38,68 @@ all_data <- csv_files |>
 # format for flextable
 totab <- all_data |> 
   ungroup() |> 
+  pivot_longer(cols = c(mean_acres, std_acres), names_to = "statistic", values_to = "acres") |>
+  unite("land_policy_yr", land_policy, yr, sep = "_")
+totabave <- totab |> 
+  filter(statistic == "mean_acres") |> 
+  select(-statistic) |>
+  pivot_wider(names_from = land_policy_yr, values_from = acres, names_sort = T, values_fill = 0)
+totabstd <- totab |> 
+  filter(statistic == "std_acres") |> 
+  select(-statistic) |>
+  pivot_wider(names_from = land_policy_yr, values_from = acres, names_sort = T, values_fill = 0)
+totabcol <- totabave |> 
+  pivot_longer(cols = -c(county, hem_category, baseline_2025), names_to = "scenario", values_to = "mean_acres") |>
   mutate(
-    mean_acres = round(mean_acres, 0),
-    mean_acres = case_when(
-      !is.na(mean_acres) ~ format(mean_acres, big.mark = ",", scientific = FALSE), 
+    col = sign(mean_acres - baseline_2025), 
+    col = case_when(
+      col == 1 ~ "green",
+      col == -1 ~ "red",
+      TRUE ~ "black"
+    ),
+    scenario = factor(scenario, 
+      levels = c('PD_2050', 'AM_2050', 'PD_2080', 'AM_2080', 'PD_2100', 'AM_2100'), 
+      labels = c('PD_2050_col', 'AM_2050_col', 'PD_2080_col', 'AM_2080_col', 'PD_2100_col', 'AM_2100_col')
+    )
+  ) |> 
+  select(-mean_acres, -baseline_2025) |> 
+  pivot_wider(names_from = scenario, values_from = col, names_sort = T)
+
+totab <- totabave |> 
+  left_join(totabstd, by = c("county", "hem_category"), suffix = c("_mean", "_std")) |> 
+  pivot_longer(cols = c(ends_with("_mean"), ends_with("_std")), names_to = c("land_policy", "yr", "statistic"), names_pattern = "(.*)_(.*)_(.*)", values_to = "acres") |>
+  mutate(
+    acres = round(acres, 1),
+    acres = case_when(
+      yr == 2025 & statistic == 'std' ~ NA_real_,
+      T ~ acres
+    )
+  ) |> 
+  pivot_wider(names_from = statistic, values_from = acres) |>
+  mutate(
+    mean = case_when(
+      !is.na(mean) ~ format(mean, big.mark = ",", scientific = FALSE), 
       TRUE ~ NA_character_
     ),
-    std_acres = round(std_acres, 0),
-    std_acres = case_when(
-      !is.na(std_acres) ~ format(std_acres, big.mark = ",", scientific = FALSE), 
+    std = case_when(
+      !is.na(std) ~ format(std, big.mark = ",", scientific = FALSE), 
       TRUE ~ NA_character_
     )
-  ) |>
-  unite("mean_std_acres", mean_acres, std_acres, sep = " ± ", na.rm = T) |>
+  ) |> 
+  unite("mean_std_acres", mean, std, sep = " ± ", na.rm = T) |> 
   unite('policy_yr', land_policy, yr, sep = "_") |>
   mutate(
     policy_yr = factor(policy_yr, levels = c('baseline_2025', 'PD_2050', 'AM_2050', 'PD_2080', 'AM_2080', 'PD_2100', 'AM_2100'))
-  ) |>
+  ) |> 
   pivot_wider(names_from = policy_yr, values_from = mean_std_acres, names_sort = T, values_fill = "0") |> 
-  arrange(
-    county, hem_category
-  )
+  left_join(totabcol, by = c("county", "hem_category"), suffix = c("", "_col"))
 
 # add flextable with extra header row for years
-totab |> 
+totabcounty <- totab |> 
   filter(county == 'Citrus') |>
-  select(-county) |> 
-  flextable() |> 
+  select(-county)
+
+flextable(totabcounty, col_keys = c("hem_category", "baseline_2025", "PD_2050", "AM_2050", "PD_2080", "AM_2080", "PD_2100", "AM_2100")) |> 
   add_header_row(values = c("", "", "2050", "2050", "2080", "2800", "2100", "2100")) |>
   merge_at(i = 1, j = 3:4, part = 'header') |>
   merge_at(i = 1, j = 5:6, part = 'header') |>
@@ -79,4 +114,6 @@ totab |>
     PD_2100 = "PD",
     AM_2100 = "AM"
   ) |> 
+  color(j = c("PD_2050", "AM_2050", "PD_2080", "AM_2080", "PD_2100", "AM_2100"), 
+        color = c(totabcounty$PD_2050_col, totabcounty$AM_2050_col, totabcounty$PD_2080_col, totabcounty$AM_2080_col, totabcounty$PD_2100_col, totabcounty$AM_2100_col)) |>
   autofit()
