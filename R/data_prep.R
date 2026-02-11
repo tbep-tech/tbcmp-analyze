@@ -18,9 +18,9 @@ num_cores <- detectCores() - 1
 prj <- 3087
 
 #TBCMP project area bounded by 7 county census areas including associated coastal areas tied to local/state jurisdictions
-curl_download(url = "https://www2.census.gov/geo/tiger/TIGER2025/COUSUB/tl_2025_12_cousub.zip",
-              destfile = "./data-raw/census/tl_2025_12_cousub.zip")
-unzip("./data-raw/census/tl_2025_12_cousub.zip", exdir = "./data-raw/census/")
+#curl_download(url = "https://www2.census.gov/geo/tiger/TIGER2025/COUSUB/tl_2025_12_cousub.zip",
+#              destfile = "./data-raw/census/tl_2025_12_cousub.zip")
+#unzip("./data-raw/census/tl_2025_12_cousub.zip", exdir = "./data-raw/census/")
 
 fl_counties <- st_read("./data-raw/census/tl_2025_12_cousub.shp")
 
@@ -47,6 +47,9 @@ bb <- vect(tbcmp_bb)
 tbcmp_raster <- terra::rast(extent = bb,
                             res = 2,
                             crs = "EPSG:3087")
+tbcmp_raster_5m <- terra::rast(extent = bb,     #Optional workflow to create base layers using a 5x5m grid. Useful if you run into memory issues creating/processing raster files.
+                               res = 5,
+                               crs = "EPSG:3087")
 
 tbcmp_raster_GOM <- tbcmp_raster
 values(tbcmp_raster_GOM) <- 5400
@@ -104,7 +107,7 @@ lulc23_sg24 <- bind_rows(sg2024, lu_dif)  |>
 
 save(lulc23_sg24, file = here('data/lulc23_sg24_base.RData'), compress = 'xz')
 
-load(file = here('data/lulc23_sg24_base.RData'))
+#load(file = here('data/lulc23_sg24_base.RData'))
 
 tbcmp_hem <- rasterize(vect(lulc23_sg24), tbcmp_raster, field = "HEM_CODE", fun = max)
 
@@ -126,7 +129,16 @@ writeRaster(tbcmp_hem_filled, filename = here('data/tbcmp_hem_filled.tif'), over
 
 #tbcmp_hem_filled <- rast(here('data/tbcmp_hem_filled.tif'))
 
+tbcmp_2100 <- rast(here('data/output/tbcmp_PD_LA_IntHi_2100.tif'))
+levels(tbcmp_2100) <- hem_class
+
 tm_shape(tbcmp_hem_filled) +
+  tm_raster(col = "ClassName", palette = hem_color, title = "Land Use") +   #View the pretty habitat/veg base layer
+  tm_shape(tbcmp_cnt) +
+  tm_polygons(fill_alpha = 0) +
+  tm_layout(legend.outside = TRUE)
+
+tm_shape(tbcmp_2100) +
   tm_raster(col = "ClassName", palette = hem_color, title = "Land Use") +   #View the pretty habitat/veg base layer
   tm_shape(tbcmp_cnt) +
   tm_polygons(fill_alpha = 0) +
@@ -156,7 +168,12 @@ for (i in 1:nrow(tbcmp_cnt)) {
 }
 
 county_summary <- do.call(rbind, county_list) |>
-                  mutate(acres = count * 0.000988422)
+                  mutate(acres = count * 0.00617763,   #Use 0.000988422 to Convert from 2x2m grid cell, use 0.00617763 for 5x5m grid cell
+                         land_policy = 'baseline',
+                         accretion = 'baseline',
+                         slr_scenario = 'baseline',
+                         yr = 2025)
+write.csv(county_summary, here("data/output/tbcmp_baseline_baseline_baseline_2025_county_summary.csv"), row.names = FALSE)
 
 #df <- as.data.frame(tbcmp_hem_filled, xy=TRUE)
 
