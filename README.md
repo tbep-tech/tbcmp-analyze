@@ -119,12 +119,12 @@ HabitatEvolutionModel_v202512()
 HabitatEvolutionModel_v202512(
   SLR_Table = "path/to/SLR_scenarios.dbf",
   Datums_Table = "path/to/datums.dbf",
-  Protect_Developed = TRUE,  # Protect developed areas from conversion
+  Protect_Developed = TRUE, # to protect developed (PD) areas from conversion or "FALSE" to allow migration (AM) to occur
   veg = "path/to/habitat_raster.tif",
   topo = "path/to/dem.tif",
-  Juncus_Marsh_Accretion_mm_yr = 3.75,
-  Salt_Marsh_Accretion_mm_yr = 1.6,
-  Mangrove_Accretion_mm_yr = 1.6,
+  Juncus_Marsh_Accretion_mm_yr = 3.75, # for low accreion or "4" for high accretion scenarios
+  Salt_Marsh_Accretion_mm_yr = 1.6, # for low accreion or "3" for high accretion scenarios
+  Mangrove_Accretion_mm_yr = 1.6, # for low accreion or "5" for high accretion scenarios
   Topo_Year = 2025,
   output_template = "outputs/habitat_{OutY}.tif"
 )
@@ -156,7 +156,7 @@ new_topo <- MarshAccretion_v202512(
 
 ### Elevation-Based Habitat Zones
 
-The model uses tidal datums to define habitat zones:
+The model uses tidal datums to define and evolve habitat zones through the different SLR scenarios at each time step:
 
 ```
 HAT  ═══════════════════════════  Upland / Salt Barren boundary
@@ -225,7 +225,7 @@ When `Protect_Developed = FALSE`:
 - **6600**: Salt Barren
 
 ### Coastal (7000s, 9000s)
-- **7100**: Beach
+- **7100**: Beach - Dunes
 - **9113**: Seagrass (Submerged Aquatic Vegetation)
 
 ---
@@ -354,7 +354,7 @@ If using this code, please cite:
 
 ```
 Tampa Bay Coastal Master Plan (TBCMP). 2026. Habitat Evolution Model v202512.
-Converted from ArcGIS to R by the Tampa Bay Estuary Program, February 2026.
+Converted to R scripts by the Tampa Bay Estuary Program, February 2026.
 ```
 
 ---
