@@ -1,4 +1,4 @@
-# ArcGIS to R Conversion: Habitat Evolution Model
+# R Script Conversion: Habitat Evolution Model
 ## Tampa Bay Coastal Master Plan (TBCMP)
 
 ---
