@@ -122,9 +122,9 @@ HabitatEvolutionModel_v202512(
   Protect_Developed = TRUE, # to protect developed (PD) areas from conversion or "FALSE" to allow migration (AM) to occur
   veg = "path/to/habitat_raster.tif",
   topo = "path/to/dem.tif",
-  Juncus_Marsh_Accretion_mm_yr = 3.75, # for low accreion or "4" for high accretion scenarios
-  Salt_Marsh_Accretion_mm_yr = 1.6, # for low accreion or "3" for high accretion scenarios
-  Mangrove_Accretion_mm_yr = 1.6, # for low accreion or "5" for high accretion scenarios
+  Juncus_Marsh_Accretion_mm_yr = 3.75, # for low accretion or "4" for high accretion scenarios
+  Salt_Marsh_Accretion_mm_yr = 1.6, # for low accretion or "3" for high accretion scenarios
+  Mangrove_Accretion_mm_yr = 1.6, # for low accretion or "5" for high accretion scenarios
   Topo_Year = 2025,
   output_template = "outputs/habitat_{OutY}.tif"
 )
@@ -142,9 +142,9 @@ topo <- rast("dem.tif")
 new_topo <- MarshAccretion_v202512(
   habitat = "path/to/habitat_raster.tif",
   topo = "path/to/dem.tif",
-  Juncus_Marsh_Accretion_mm_yr = 3.75,
-  Salt_Marsh_Accretion_mm_yr = 1.6,
-  Mangrove_Accretion_mm_yr = 1.6,
+  Juncus_Marsh_Accretion_mm_yr = 3.75, # for low accretion or "4" for high accretion scenarios
+  Salt_Marsh_Accretion_mm_yr = 1.6, # for low accretion or "3" for high accretion scenarios
+  Mangrove_Accretion_mm_yr = 1.6, # for low accretion or "5" for high accretion scenarios
   Topo_Year = 2025,
   OutY = 2050
 )
