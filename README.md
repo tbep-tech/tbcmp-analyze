@@ -69,7 +69,7 @@ install.packages(c(
 ### System Requirements
 
 - R version 4.0 or higher
-- Minimum 8 GB RAM (16+ GB recommended for large study areas)
+- Minimum 16 GB RAM (32+ GB recommended for large study areas)
 - GDAL installed (usually comes with `terra` package)
 
 ---
@@ -140,8 +140,8 @@ habitat <- rast("habitat.tif")
 topo <- rast("dem.tif")
 
 new_topo <- MarshAccretion_v202512(
-  habitat = habitat,
-  topo = topo,
+  habitat = "path/to/habitat_raster.tif",
+  topo = "path/to/dem.tif",
   Juncus_Marsh_Accretion_mm_yr = 3.75,
   Salt_Marsh_Accretion_mm_yr = 1.6,
   Mangrove_Accretion_mm_yr = 1.6,
@@ -212,8 +212,8 @@ When `Protect_Developed = FALSE`:
 - **4400**: Tree Plantation
 
 ### Open Water (5000s)
-- **5200**: Estuarine Open Water
-- **5400**: Subtidal (deep water)
+- **5200**: Open Freshwater
+- **5400**: Estuarine/Gulf Subtidal (deeper water)
 
 ### Wetlands (6000s)
 - **6110**: Freshwater Swamp
@@ -353,9 +353,8 @@ gc()  # Garbage collection
 If using this code, please cite:
 
 ```
-Tampa Bay Coastal Master Plan (TBCMP)
-Habitat Evolution Model v202512
-Converted from ArcGIS to R, February 2026
+Tampa Bay Coastal Master Plan (TBCMP). 2026. Habitat Evolution Model v202512.
+Converted from ArcGIS to R by the Tampa Bay Estuary Program, February 2026.
 ```
 
 ---
@@ -378,7 +377,7 @@ For questions or issues:
 
 ## Acknowledgments
 
-- Original ArcGIS ModelBuilder: TBCMP Team
-- Conversion to R: Ed Sherwood
+- Original ArcGIS ModelBuilder: [SLAMM](https://warrenpinnacle.com/), ESA (ArcMap Toolbox v10.7; see [Sheehan et al. 2015](https://doi.org/10.1007/s13157-019-01137-y)), TBEP & TBCMP Teams
+- Conversion to R: Claude.AI and Ed Sherwood
 - Sea Level Rise Scenarios: [NOAA SLR Calculator](https://coast.noaa.gov/sealevelcalculator/)
 - Tidal Datum Data: [St. Petersburg, FL - Station ID = 8726520](https://tidesandcurrents.noaa.gov/stationhome.html?id=8726520)
