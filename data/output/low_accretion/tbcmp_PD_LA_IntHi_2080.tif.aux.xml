@@ -1,0 +1,148 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Description>Band_1</Description>
+    <GDALRasterAttributeTable tableType="thematic">
+      <FieldDefn index="0">
+        <Name>Value</Name>
+        <Type typeAsString="Integer">0</Type>
+        <Usage usageAsString="MinMax">5</Usage>
+      </FieldDefn>
+      <FieldDefn index="1">
+        <Name>ClassName</Name>
+        <Type typeAsString="String">2</Type>
+        <Usage usageAsString="Name">2</Usage>
+      </FieldDefn>
+      <FieldDefn index="2">
+        <Name>Count</Name>
+        <Type typeAsString="Real">1</Type>
+        <Usage usageAsString="Generic">0</Usage>
+      </FieldDefn>
+      <Row index="0">
+        <F>0</F>
+        <F>Upland Undeveloped</F>
+        <F>188727</F>
+      </Row>
+      <Row index="1">
+        <F>1100</F>
+        <F>Upland Developed - Hard</F>
+        <F>57968338</F>
+      </Row>
+      <Row index="2">
+        <F>1200</F>
+        <F>Upland Developed - Hard</F>
+        <F>145271574</F>
+      </Row>
+      <Row index="3">
+        <F>1800</F>
+        <F>Upland Developed - Soft</F>
+        <F>4103126</F>
+      </Row>
+      <Row index="4">
+        <F>1820</F>
+        <F>Upland Developed - Soft</F>
+        <F>4534141</F>
+      </Row>
+      <Row index="5">
+        <F>1900</F>
+        <F>Upland Undeveloped</F>
+        <F>38934916</F>
+      </Row>
+      <Row index="6">
+        <F>2100</F>
+        <F>Upland Developed - Soft</F>
+        <F>88427211</F>
+      </Row>
+      <Row index="7">
+        <F>2200</F>
+        <F>Upland Developed - Soft</F>
+        <F>6337122</F>
+      </Row>
+      <Row index="8">
+        <F>2400</F>
+        <F>Upland Developed - Soft</F>
+        <F>2091829</F>
+      </Row>
+      <Row index="9">
+        <F>3200</F>
+        <F>Upland Undeveloped</F>
+        <F>24718479</F>
+      </Row>
+      <Row index="10">
+        <F>4100</F>
+        <F>Upland Undeveloped</F>
+        <F>73684070</F>
+      </Row>
+      <Row index="11">
+        <F>4400</F>
+        <F>Upland Undeveloped</F>
+        <F>10733118</F>
+      </Row>
+      <Row index="12">
+        <F>5200</F>
+        <F>Open Freshwater</F>
+        <F>16575852</F>
+      </Row>
+      <Row index="13">
+        <F>5400</F>
+        <F>Open Water</F>
+        <F>324550275</F>
+      </Row>
+      <Row index="14">
+        <F>6110</F>
+        <F>Freshwater Marsh &amp; Wetland</F>
+        <F>56215307</F>
+      </Row>
+      <Row index="15">
+        <F>6120</F>
+        <F>Mangrove</F>
+        <F>7455206</F>
+      </Row>
+      <Row index="16">
+        <F>6410</F>
+        <F>Freshwater Marsh &amp; Wetland</F>
+        <F>39886209</F>
+      </Row>
+      <Row index="17">
+        <F>6420</F>
+        <F>High Salt Marsh</F>
+        <F>1340467</F>
+      </Row>
+      <Row index="18">
+        <F>6425</F>
+        <F>Juncus Marsh</F>
+        <F>1149231</F>
+      </Row>
+      <Row index="19">
+        <F>6510</F>
+        <F>Subtidal - Tidal Flat</F>
+        <F>822347</F>
+      </Row>
+      <Row index="20">
+        <F>6600</F>
+        <F>Salt Barren</F>
+        <F>2578631</F>
+      </Row>
+      <Row index="21">
+        <F>7100</F>
+        <F>Beach - Dune</F>
+        <F>35242</F>
+      </Row>
+      <Row index="22">
+        <F>9113</F>
+        <F>Subtidal - Seagrass</F>
+        <F>27909845</F>
+      </Row>
+    </GDALRasterAttributeTable>
+    <Metadata>
+      <MDI key="STATISTICS_COUNT">935511263.000000</MDI>
+      <MDI key="STATISTICS_COVARIANCES">4434544.088418233</MDI>
+      <MDI key="STATISTICS_MAXIMUM">9113</MDI>
+      <MDI key="STATISTICS_MEAN">3994.9134131077</MDI>
+      <MDI key="STATISTICS_MEDIAN">nan</MDI>
+      <MDI key="STATISTICS_MINIMUM">0</MDI>
+      <MDI key="STATISTICS_SKIPFACTORX">1</MDI>
+      <MDI key="STATISTICS_SKIPFACTORY">1</MDI>
+      <MDI key="STATISTICS_STDDEV">2105.8357220871</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>
