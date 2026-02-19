@@ -1,4 +1,4 @@
-# ARCGIS TO R CONVERSION SUMMARY
+# CONVERSION SUMMARY
 ## Habitat Evolution Model for Tampa Bay Coastal Management Program
 
 ---
@@ -6,7 +6,7 @@
 ## Conversion Overview
 
 **Date**: February 4, 2026  
-**Source**: ArcGIS ModelBuilder Python exports  
+**Source**: ArcGIS ModelBuilder & ArcPython script exports  
 **Target**: R scripts using terra and sf packages  
 **Status**: ✅ Complete
 
