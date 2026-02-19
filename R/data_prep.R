@@ -9,8 +9,7 @@ library(exactextractr)
 library(tmap)
 #library(future)
 #plan(multisession)
-
-num_cores <- detectCores() - 1
+#num_cores <- detectCores() - 1
 
 ##Download base files for prepping project area extent and existing conditions
 
@@ -50,13 +49,24 @@ tbcmp_raster <- terra::rast(extent = bb,
 tbcmp_raster_5m <- terra::rast(extent = bb,     #Optional workflow to create base layers using a 5x5m grid. Useful if you run into memory issues creating/processing raster files.
                                res = 5,
                                crs = "EPSG:3087")
+tbcmp_raster_10m <- terra::rast(extent = bb,     #Optional workflow to create base layers using a 10x10m grid. Useful if you run into memory issues creating/processing raster files.
+                                res = 10,
+                                crs = "EPSG:3087")
 
-tbcmp_raster_GOM <- tbcmp_raster
-values(tbcmp_raster_GOM) <- 5400
+values(tbcmp_raster_10m) <- 0 # Fill an empty raster using a 10m grid space for subsequent hot spot processing
+
+tbcmp_raster_GOM <- tbcmp_raster # Create a masking raster for open Gulf waters for where no LULC info exists
+values(tbcmp_raster_GOM) <- 5400 # Fill it with the Open Water HEM code
+
+save(tbcmp_cnt, file = here('data/tbcmp_cnt.Rdata'), compress = 'xz')
+
+#writeRaster(tbcmp_raster_5m, filename = here('data/tbcmp_base_raster_5m.tif'), overwrite = T, datatype = "INT2U", wopt = list(gdal = c("RAT=YES")))
+writeRaster(tbcmp_raster_10m, filename = here('data/tbcmp_base_raster_10m.tif'), overwrite = T, datatype = "INT2U", wopt = list(gdal = c("RAT=YES")))
+
 
 #Download land use and cover classifications, crosswalk to HEM codes, and then rasterize to project area empty rster above
 
-#These SWFWMD layers can be recoded to extract through any web-based APIs in the future
+#These SWFWMD layers can be recoded to download directly through SWFWMD web-based APIs in the future
 lulc2023 <- st_read("T:/05_GIS/SWFWMD/LULC_2023/LANDUSELANDCOVER2023.shp") |>
             st_transform(prj) |>
             dplyr::rename(FLUCCSDESC = FLUCSDESC) |>
@@ -107,7 +117,7 @@ lulc23_sg24 <- bind_rows(sg2024, lu_dif)  |>
 
 save(lulc23_sg24, file = here('data/lulc23_sg24_base.RData'), compress = 'xz')
 
-#load(file = here('data/lulc23_sg24_base.RData'))
+load(file = here('data/lulc23_sg24_base.RData'))
 
 tbcmp_hem <- rasterize(vect(lulc23_sg24), tbcmp_raster, field = "HEM_CODE", fun = max)
 
@@ -129,7 +139,7 @@ writeRaster(tbcmp_hem_filled, filename = here('data/tbcmp_hem_filled.tif'), over
 
 #tbcmp_hem_filled <- rast(here('data/tbcmp_hem_filled.tif'))
 
-tbcmp_2100 <- rast(here('data/output/tbcmp_PD_LA_IntHi_2100.tif'))
+tbcmp_2100 <- rast(here('data/output/low_accretion/tbcmp_PD_LA_IntHi_2100.tif'))
 levels(tbcmp_2100) <- hem_class
 
 tm_shape(tbcmp_hem_filled) +
@@ -139,11 +149,12 @@ tm_shape(tbcmp_hem_filled) +
   tm_layout(legend.outside = TRUE)
 
 tm_shape(tbcmp_2100) +
-  tm_raster(col = "ClassName", palette = hem_color, title = "Land Use") +   #View the pretty habitat/veg base layer
+  tm_raster(col = "ClassName", palette = hem_color, title = "Land Use") +   #View one of the HEM outputs, 2100 - PD, LA, Inter High SLR
   tm_shape(tbcmp_cnt) +
   tm_polygons(fill_alpha = 0) +
   tm_layout(legend.outside = TRUE)
 
+# This section summarizes the existing habitat acreages from the created raster file
 hem_summary <- freq(tbcmp_hem_filled) |>
                as.data.frame() |>
                group_by(value) |>
@@ -175,13 +186,6 @@ county_summary <- do.call(rbind, county_list) |>
                          yr = 2025)
 write.csv(county_summary, here("data/output/tbcmp_baseline_baseline_baseline_2025_county_summary.csv"), row.names = FALSE)
 
-#df <- as.data.frame(tbcmp_hem_filled, xy=TRUE)
-
-#p <- ggplot(data = tbcmp_hem_filled, aes(x = x, y = y, fill = Value))+
-#            geom_raster() +
-#            scale_fill_discrete(hem_color) +
-#            coord_equal() +
-#            theme_minimal
 
 #Download statewide DEM data and/or NOAA bathymetric data to develop a complete topo-bathy layer for the project area.
 
