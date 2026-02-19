@@ -381,3 +381,7 @@ For questions or issues:
 - Conversion to R: Claude.AI and Ed Sherwood
 - Sea Level Rise Scenarios: [NOAA SLR Calculator](https://coast.noaa.gov/sealevelcalculator/)
 - Tidal Datum Data: [St. Petersburg, FL - Station ID = 8726520](https://tidesandcurrents.noaa.gov/stationhome.html?id=8726520)
+- Land Use & Land Cover: [Southwest Florida Water Management District](https://data-swfwmd.opendata.arcgis.com/search?groupIds=880fc95697ce45c3a8b078bb752faf40)
+- Seagrass & Subtidal Habitats: [Southwest Florida Water Management District](https://data-swfwmd.opendata.arcgis.com/search?groupIds=d9a4213eb9ea4713bb710e03bdcc6648)
+- Digital Elevation Models: [FGDL via Statewide FL DEM efforts](https://fgdl.org/ords/r/prod/fgdl-current/catalog) &
+                            [NOAA's Continuously Updated DEMs](https://www.ncei.noaa.gov/products/coastal-elevation-models)
