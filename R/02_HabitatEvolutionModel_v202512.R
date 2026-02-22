@@ -8,15 +8,20 @@
 # ==============================================================================
 
 # Required Libraries
+library(here)
 library(terra)      # Raster operations
 library(sf)         # Vector operations
 library(dplyr)      # Data manipulation
 library(foreign)    # For reading .dbf files
 
 # Source helper functions
-source("R\DatumAdjustment_v202512.R")
-source("R\MarshAccretion_v202512.R")
-source("R\HabitatAdjustment_v202512.R")
+source("R/DatumAdjustment_v202512.R")
+source("R/MarshAccretion_v202512.R")
+source("R/HabitatAdjustment_v202512.R")
+source("R/HabitatAdjustment_part2_v202512.R")
+source("R/HabitatAdjustment_part3_v202512.R")
+source("R/Ocean2Beach_v202512.R")
+source("R/ProcessFreshwater_v202512.R")
 
 # ==============================================================================
 # MAIN FUNCTION
