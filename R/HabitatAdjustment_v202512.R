@@ -8,8 +8,8 @@
 library(terra)
 
 # Source helper functions
-source("Ocean2Beach_v202512.R")
-source("ProcessFreshwater_v202512.R")
+source("R/Ocean2Beach_v202512.R")
+source("R/ProcessFreshwater_v202512.R")
 
 # ==============================================================================
 # MAIN FUNCTION
@@ -31,7 +31,7 @@ HabitatAdjustment_v202512 <- function(
     MLHW_SLR = 0.124,
     Ocean_500m_ras = NULL
 ) {
-  
+
   # Load rasters if paths provided
   if (is.character(topo)) {
     topo <- rast(topo)
@@ -39,44 +39,44 @@ HabitatAdjustment_v202512 <- function(
   if (is.character(habitat)) {
     habitat <- rast(habitat)
   }
-  
+
   cat("Starting habitat adjustment process...\n")
   cat(sprintf("  Year: %d\n", OutY))
   cat(sprintf("  Protect Developed: %s\n", Protect_Developed))
-  
+
   # =========================================================================
   # SECTION 1: DEVELOPED LAND PROTECTION
   # =========================================================================
-  
+
   cat("\nSection 1: Processing developed land categories...\n")
-  
+
   # -------------------------------------------------------------------------
   # Upland Developed Hard Surface (1200)
   # These are always protected
   # -------------------------------------------------------------------------
-  
+
   Upland_Developed_hard <- ifel(
     (habitat == 1200) & (topo != -999),
     1200,
     0
   )
-  
+
   # -------------------------------------------------------------------------
   # Upland Developed Pervious (1100)
   # These are always protected
   # -------------------------------------------------------------------------
-  
+
   Upland_Developed_hard_2 <- ifel(
     (habitat == 1100) & (topo != -999),
     1100,
     0
   )
-  
+
   # -------------------------------------------------------------------------
   # Upland Developed Low Density (1800)
   # Protection depends on Protect_Developed setting
   # -------------------------------------------------------------------------
-  
+
   if (Protect_Developed) {
     # Protect all low density development
     Upland_Dev_2 <- ifel(
@@ -88,7 +88,7 @@ HabitatAdjustment_v202512 <- function(
     Upland_Dev_2 <- rast(topo)  # Create template
     values(Upland_Dev_2) <- 0
   }
-  
+
   # Alternative: Allow inundation above HAT
   if (!Protect_Developed) {
     Upland_Dev_1_2 <- ifel(
@@ -100,18 +100,18 @@ HabitatAdjustment_v202512 <- function(
     Upland_Dev_1_2 <- rast(topo)  # Create template
     values(Upland_Dev_1_2) <- 0
   }
-  
+
   # Merge the two approaches
   Upland_Developed_soft <- ifel(
     Upland_Dev_2 > 0,
     Upland_Dev_2,
     Upland_Dev_1_2
   )
-  
+
   # -------------------------------------------------------------------------
   # Golf Courses (1820)
   # -------------------------------------------------------------------------
-  
+
   if (Protect_Developed) {
     Golf1 <- ifel(
       (habitat == 1820) & (topo != -999),
@@ -122,7 +122,7 @@ HabitatAdjustment_v202512 <- function(
     Golf1 <- rast(topo)
     values(Golf1) <- 0
   }
-  
+
   if (!Protect_Developed) {
     Golf2 <- ifel(
       (habitat == 1820) & (topo >= HAT_SLR),
@@ -133,13 +133,13 @@ HabitatAdjustment_v202512 <- function(
     Golf2 <- rast(topo)
     values(Golf2) <- 0
   }
-  
+
   Golf_soft <- ifel(Golf1 > 0, Golf1, Golf2)
-  
+
   # -------------------------------------------------------------------------
   # Agriculture (2100)
   # -------------------------------------------------------------------------
-  
+
   if (Protect_Developed) {
     Ag1 <- ifel(
       (habitat == 2100) & (topo != -999),
@@ -150,7 +150,7 @@ HabitatAdjustment_v202512 <- function(
     Ag1 <- rast(topo)
     values(Ag1) <- 0
   }
-  
+
   if (!Protect_Developed) {
     Ag2 <- ifel(
       (habitat == 2100) & (topo >= HAT_SLR),
@@ -161,13 +161,13 @@ HabitatAdjustment_v202512 <- function(
     Ag2 <- rast(topo)
     values(Ag2) <- 0
   }
-  
+
   Agriculture <- ifel(Ag1 > 0, Ag1, Ag2)
-  
+
   # -------------------------------------------------------------------------
   # Tree Crops (2200)
   # -------------------------------------------------------------------------
-  
+
   if (Protect_Developed) {
     Tree1 <- ifel(
       (habitat == 2200) & (topo != -999),
@@ -178,7 +178,7 @@ HabitatAdjustment_v202512 <- function(
     Tree1 <- rast(topo)
     values(Tree1) <- 0
   }
-  
+
   if (!Protect_Developed) {
     Tree2 <- ifel(
       (habitat == 2200) & (topo >= HAT_SLR),
@@ -189,13 +189,13 @@ HabitatAdjustment_v202512 <- function(
     Tree2 <- rast(topo)
     values(Tree2) <- 0
   }
-  
+
   Tree <- ifel(Tree1 > 0, Tree1, Tree2)
-  
+
   # -------------------------------------------------------------------------
   # Vineyard (2400)
   # -------------------------------------------------------------------------
-  
+
   if (Protect_Developed) {
     Vine1 <- ifel(
       (habitat == 2400) & (topo != -999),
@@ -206,7 +206,7 @@ HabitatAdjustment_v202512 <- function(
     Vine1 <- rast(topo)
     values(Vine1) <- 0
   }
-  
+
   if (!Protect_Developed) {
     Vine2 <- ifel(
       (habitat == 2400) & (topo >= HAT_SLR),
@@ -217,13 +217,13 @@ HabitatAdjustment_v202512 <- function(
     Vine2 <- rast(topo)
     values(Vine2) <- 0
   }
-  
+
   Vineyard <- ifel(Vine1 > 0, Vine1, Vine2)
-  
+
   # -------------------------------------------------------------------------
   # Aquaculture (2550)
   # -------------------------------------------------------------------------
-  
+
   if (Protect_Developed) {
     aqui1 <- ifel(
       (habitat == 2550) & (topo != -999),
@@ -234,7 +234,7 @@ HabitatAdjustment_v202512 <- function(
     aqui1 <- rast(topo)
     values(aqui1) <- 0
   }
-  
+
   if (!Protect_Developed) {
     aqui2 <- ifel(
       (habitat == 2550) & (topo >= HAT_SLR),
@@ -245,11 +245,11 @@ HabitatAdjustment_v202512 <- function(
     aqui2 <- rast(topo)
     values(aqui2) <- 0
   }
-  
+
   Aquiculture <- ifel(aqui1 > 0, aqui1, aqui2)
-  
+
   # Continue in next section...
-  
+
   # Store intermediate results for part 2
   intermediate <- list(
     Upland_Developed_hard = Upland_Developed_hard,
@@ -261,7 +261,7 @@ HabitatAdjustment_v202512 <- function(
     Vineyard = Vineyard,
     Aquiculture = Aquiculture
   )
-  
+
   # Call part 2
   HabitatAdjustment_part2(
     topo = topo,
