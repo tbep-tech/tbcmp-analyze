@@ -5,7 +5,6 @@
 # Purpose: Adjust tidal datums for sea level rise scenarios
 # ==============================================================================
 
-library(foreign)  # For reading .dbf files
 library(dplyr)
 
 # ==============================================================================
@@ -31,7 +30,7 @@ DatumAdjustment_v202512 <- function(
 
   # Read Datums table
   if (is.character(Datums)) {
-    datums_data <- read.dbf(Datums)
+    datums_data <- read.csv(Datums)
   } else {
     datums_data <- Datums
   }
