@@ -4,13 +4,13 @@
     <GDALRasterAttributeTable tableType="thematic">
       <FieldDefn index="0">
         <Name>Value</Name>
-        <Type typeAsString="Integer">0</Type>
-        <Usage usageAsString="Generic">0</Usage>
+        <Type>0</Type>
+        <Usage>0</Usage>
       </FieldDefn>
       <FieldDefn index="1">
         <Name>ClassName</Name>
-        <Type typeAsString="String">2</Type>
-        <Usage usageAsString="Generic">0</Usage>
+        <Type>2</Type>
+        <Usage>0</Usage>
       </FieldDefn>
       <Row index="0">
         <F>1100</F>
