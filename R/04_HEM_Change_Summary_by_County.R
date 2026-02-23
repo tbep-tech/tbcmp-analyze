@@ -32,7 +32,7 @@ all_data <- csv_files |>
                                   TRUE ~ NA)) |>
   rename(county = id) |>
   summarize(sum_acres = sum(acres),
-            .by=c(county, land_policy, slr_scenario, hem_category, yr)) |>
+            .by=c(county, land_policy, accretion, slr_scenario, hem_category, yr)) |>
   summarize(mean_acres = mean(sum_acres),
             std_acres = sd(sum_acres),
             .by=c(county, land_policy, hem_category, yr))
@@ -77,12 +77,12 @@ projections <- csv_files |>
                                                TRUE ~ NA)) |>
                rename(county = id) |>
                summarize(sum_acres = sum(acres),
-                         .by=c(county, land_policy, slr_scenario, hem_category, yr))
+                         .by=c(county, land_policy, accretion, slr_scenario, hem_category, yr))
 
 projection_summary <- projections |>
                       summarize(min = min(sum_acres),
                                 max = max(sum_acres),
-                                .by=c(county,hem_category,yr))
+                                .by=c(county,hem_category,yr)) |>
                       summarize(sum_min = sum(min),
                                 sum_max = sum(max),
                                 .by=c(hem_category,yr))
