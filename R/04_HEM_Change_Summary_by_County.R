@@ -2,6 +2,7 @@ library(here)
 library(tidyverse)
 library(flextable)
 library(ftExtra)
+options(scipen=999)
 
 # Set the directory path
 directory_path <- "./data/output/"
@@ -83,8 +84,8 @@ projection_summary <- projections |>
                       summarize(min = min(sum_acres),
                                 max = max(sum_acres),
                                 .by=c(county,hem_category,yr)) |>
-                      summarize(sum_min = sum(min),
-                                sum_max = sum(max),
+                      summarize(sum_min = (sum(min)+0),
+                                sum_max = (sum(max)+0),
                                 .by=c(hem_category,yr))
 
 
