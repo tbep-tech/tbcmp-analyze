@@ -1,7 +1,7 @@
 ---
 title: "Tampa Bay Coastal Master Plan Habitat Assessments: Habitat Evolution Model Workflow Description"
 author: "Tampa Bay Estuary Program"
-date: "February 2026"
+date: "`r Sys.Date()`"
 format:
   html:
     toc: true
