@@ -31,42 +31,95 @@ all_data <- csv_files |>
                                   value %in% c(9113) ~ "Subtidal - Seagrass",
                                   TRUE ~ NA)) |>
   rename(county = id) |>
-  group_by(county, land_policy, hem_category, yr) |>
-  summarize(mean_acres = mean(acres),
-            std_acres = sd(acres))
+  summarize(sum_acres = sum(acres),
+            .by=c(county, land_policy, slr_scenario, hem_category, yr)) |>
+  summarize(mean_acres = mean(sum_acres),
+            std_acres = sd(sum_acres),
+            .by=c(county, land_policy, hem_category, yr))
+
+#Baseline Summary
+
+baseline <- read.csv(file="data/output/tbcmp_baseline_baseline_baseline_2025_county_summary.csv") |>
+                     mutate(hem_category = case_when(value %in% c(1100, 1200) ~ "Upland Developed - Hard",
+                                  value %in% c(1800, 1820, 2100, 2200, 2400) ~ "Upland Developed - Soft",
+                                  value %in% c(1900, 3200, 4100, 4400) ~ "Upland Undeveloped",
+                                  value %in% c(5200) ~ "Open Freshwater",
+                                  value %in% c(5400) ~ "Open Water",
+                                  value %in% c(6110, 6410) ~ "Freshwater Marsh & Wetlands",
+                                  value %in% c(6120) ~ "Mangroves",
+                                  value %in% c(6420) ~ "High Marshes",
+                                  value %in% c(6425) ~ "Juncus Marshes",
+                                  value %in% c(6600) ~ "Salt Barrens",
+                                  value %in% c(7100) ~ "Beach - Dune",
+                                  value %in% c(6510) ~ "Subtidal - Tidal Flats",
+                                  value %in% c(9113) ~ "Subtidal - Seagrass",
+                                  TRUE ~ NA)) |>
+                      group_by(hem_category) |>
+                      summarize(sum_acres = sum(acres))
+
+projections <- csv_files |>
+               lapply(read.csv) |>
+               bind_rows() |>
+               filter(value != 0 & !is.na(value) & yr != 2025) |>
+               mutate(hem_category = case_when(value %in% c(1100, 1200) ~ "Upland Developed - Hard",
+                                               value %in% c(1800, 1820, 2100, 2200, 2400) ~ "Upland Developed - Soft",
+                                               value %in% c(1900, 3200, 4100, 4400) ~ "Upland Undeveloped",
+                                               value %in% c(5200) ~ "Open Freshwater",
+                                               value %in% c(5400) ~ "Open Water",
+                                               value %in% c(6110, 6410) ~ "Freshwater Marsh & Wetlands",
+                                               value %in% c(6120) ~ "Mangroves",
+                                               value %in% c(6420) ~ "High Marshes",
+                                               value %in% c(6425) ~ "Juncus Marshes",
+                                               value %in% c(6600) ~ "Salt Barrens",
+                                               value %in% c(7100) ~ "Beach - Dune",
+                                               value %in% c(6510) ~ "Subtidal - Tidal Flats",
+                                               value %in% c(9113) ~ "Subtidal - Seagrass",
+                                               TRUE ~ NA)) |>
+               rename(county = id) |>
+               summarize(sum_acres = sum(acres),
+                         .by=c(county, land_policy, slr_scenario, hem_category, yr))
+
+projection_summary <- projections |>
+                      summarize(min = min(sum_acres),
+                                max = max(sum_acres),
+                                .by=c(county,hem_category,yr))
+                      summarize(sum_min = sum(min),
+                                sum_max = sum(max),
+                                .by=c(hem_category,yr))
+
 
 # format for flextable
-totab <- all_data |> 
-  ungroup() |> 
+totab <- all_data |>
+  ungroup() |>
   pivot_longer(cols = c(mean_acres, std_acres), names_to = "statistic", values_to = "acres") |>
   unite("land_policy_yr", land_policy, yr, sep = "_")
-totabave <- totab |> 
-  filter(statistic == "mean_acres") |> 
+totabave <- totab |>
+  filter(statistic == "mean_acres") |>
   select(-statistic) |>
   pivot_wider(names_from = land_policy_yr, values_from = acres, names_sort = T, values_fill = 0)
-totabstd <- totab |> 
-  filter(statistic == "std_acres") |> 
+totabstd <- totab |>
+  filter(statistic == "std_acres") |>
   select(-statistic) |>
   pivot_wider(names_from = land_policy_yr, values_from = acres, names_sort = T, values_fill = 0)
-totabcol <- totabave |> 
+totabcol <- totabave |>
   pivot_longer(cols = -c(county, hem_category, baseline_2025), names_to = "scenario", values_to = "mean_acres") |>
   mutate(
-    col = sign(mean_acres - baseline_2025), 
+    col = sign(mean_acres - baseline_2025),
     col = case_when(
       col == 1 ~ "green",
       col == -1 ~ "red",
       TRUE ~ "black"
     ),
-    scenario = factor(scenario, 
-      levels = c('PD_2050', 'AM_2050', 'PD_2080', 'AM_2080', 'PD_2100', 'AM_2100'), 
+    scenario = factor(scenario,
+      levels = c('PD_2050', 'AM_2050', 'PD_2080', 'AM_2080', 'PD_2100', 'AM_2100'),
       labels = c('PD_2050_col', 'AM_2050_col', 'PD_2080_col', 'AM_2080_col', 'PD_2100_col', 'AM_2100_col')
     )
-  ) |> 
-  select(-mean_acres, -baseline_2025) |> 
+  ) |>
+  select(-mean_acres, -baseline_2025) |>
   pivot_wider(names_from = scenario, values_from = col, names_sort = T)
 
-totab <- totabave |> 
-  left_join(totabstd, by = c("county", "hem_category"), suffix = c("_mean", "_std")) |> 
+totab <- totabave |>
+  left_join(totabstd, by = c("county", "hem_category"), suffix = c("_mean", "_std")) |>
   pivot_longer(cols = c(ends_with("_mean"), ends_with("_std")), names_to = c("land_policy", "yr", "statistic"), names_pattern = "(.*)_(.*)_(.*)", values_to = "acres") |>
   mutate(
     acres = round(acres, 1),
@@ -74,32 +127,32 @@ totab <- totabave |>
       yr == 2025 & statistic == 'std' ~ NA_real_,
       T ~ acres
     )
-  ) |> 
+  ) |>
   pivot_wider(names_from = statistic, values_from = acres) |>
   mutate(
     mean = case_when(
-      !is.na(mean) ~ format(mean, big.mark = ",", scientific = FALSE), 
+      !is.na(mean) ~ format(mean, big.mark = ",", scientific = FALSE),
       TRUE ~ NA_character_
     ),
     std = case_when(
-      !is.na(std) ~ format(std, big.mark = ",", scientific = FALSE), 
+      !is.na(std) ~ format(std, big.mark = ",", scientific = FALSE),
       TRUE ~ NA_character_
     )
-  ) |> 
-  unite("mean_std_acres", mean, std, sep = " ± ", na.rm = T) |> 
+  ) |>
+  unite("mean_std_acres", mean, std, sep = " ± ", na.rm = T) |>
   unite('policy_yr', land_policy, yr, sep = "_") |>
   mutate(
     policy_yr = factor(policy_yr, levels = c('baseline_2025', 'PD_2050', 'AM_2050', 'PD_2080', 'AM_2080', 'PD_2100', 'AM_2100'))
-  ) |> 
-  pivot_wider(names_from = policy_yr, values_from = mean_std_acres, names_sort = T, values_fill = "0") |> 
+  ) |>
+  pivot_wider(names_from = policy_yr, values_from = mean_std_acres, names_sort = T, values_fill = "0") |>
   left_join(totabcol, by = c("county", "hem_category"), suffix = c("", "_col"))
 
 # add flextable with extra header row for years
-totabcounty <- totab |> 
+totabcounty <- totab |>
   filter(county == 'Citrus') |>
   select(-county)
 
-flextable(totabcounty, col_keys = c("hem_category", "baseline_2025", "PD_2050", "AM_2050", "PD_2080", "AM_2080", "PD_2100", "AM_2100")) |> 
+flextable(totabcounty, col_keys = c("hem_category", "baseline_2025", "PD_2050", "AM_2050", "PD_2080", "AM_2080", "PD_2100", "AM_2100")) |>
   add_header_row(values = c("", "", "2050", "2050", "2080", "2800", "2100", "2100")) |>
   merge_at(i = 1, j = 3:4, part = 'header') |>
   merge_at(i = 1, j = 5:6, part = 'header') |>
@@ -113,7 +166,7 @@ flextable(totabcounty, col_keys = c("hem_category", "baseline_2025", "PD_2050", 
     AM_2080 = "AM",
     PD_2100 = "PD",
     AM_2100 = "AM"
-  ) |> 
-  color(j = c("PD_2050", "AM_2050", "PD_2080", "AM_2080", "PD_2100", "AM_2100"), 
+  ) |>
+  color(j = c("PD_2050", "AM_2050", "PD_2080", "AM_2080", "PD_2100", "AM_2100"),
         color = c(totabcounty$PD_2050_col, totabcounty$AM_2050_col, totabcounty$PD_2080_col, totabcounty$AM_2080_col, totabcounty$PD_2100_col, totabcounty$AM_2100_col)) |>
   autofit()

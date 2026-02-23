@@ -50,9 +50,11 @@ all_data <- csv_files |>
                                   value %in% c(9113) ~ "Subtidal - Seagrass",
                                   TRUE ~ NA)) |>
   rename(county = id) |>
-  group_by(county, land_policy, hem_category, yr) |>
-  summarize(mean_acres = mean(acres),
-            std_acres = sd(acres))
+  summarize(sum_acres = sum(acres),
+            .by=c(county, land_policy, slr_scenario, hem_category, yr)) |>
+  summarize(mean_acres = mean(sum_acres),
+            std_acres = sd(sum_acres),
+            .by=c(county, land_policy, hem_category, yr))
 
 # set colors and precision
 cols <- c('darkgreen', 'red')
