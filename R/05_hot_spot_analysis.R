@@ -1,7 +1,7 @@
 ################################################################################
 # Land Use Change Hot Spot Analysis
 # This script compares two raster land use datasets and identifies
-# spatial hot spots of change using Getis-Ord Gi* statistics
+# spatial hot spots of change using various statistics
 ################################################################################
 
 # Install and load required packages
