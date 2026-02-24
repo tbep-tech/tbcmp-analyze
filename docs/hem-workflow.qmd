@@ -31,10 +31,17 @@ execute:
 
 ---
 
-**Prepared by:** Tampa Bay Estuary Program  
+<center>**Prepared by:**  
+Tampa Bay Estuary Program  
 263 13th Ave. S., Suite 350  
-St. Petersburg, FL 33701
-
+St. Petersburg, FL 33701</center>  
+<br>
+<center>**Prepared for:**  
+Tampa Bay Regional Planning Council &  
+Tampa Bay Coastal Master Plan Team  
+4000 Gateway Centre Dr.  
+Pinellas Park, FL 33782</center>  
+<br>
 **Submitted to TBRPC:** February 2026
 
 **Repository:** <https://github.com/tbep-tech/tbcmp-analyze>
