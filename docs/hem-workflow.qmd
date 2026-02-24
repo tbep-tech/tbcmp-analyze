@@ -88,6 +88,7 @@ Habitat code assignments in the base file and model outputs are directly compara
 
 ## 4. Sea Level Rise Scenarios and Model Time Horizons
 The HEM is designed to be executed under multiple SLR scenarios, allowing the TBCMP project team and stakeholders to evaluate a range of plausible future conditions. The current implementation produces projections for three target years — 2050, 2080, and 2100 — representing near-term, later-century, and long-term planning horizons relevant to coastal management decision-making in the Tampa Bay region. Projections are also evaluated under two land development protection policy scenarios:
+
 -	Protect Developed (PD): Developed land uses are assumed to remain unchanged throughout the projection period, reflecting continued infrastructure maintenance and no planned managed retreat or adaptive redevelopment.
 -	Allow Migration (AM): Only developed land above the HAT plus projected SLR threshold is protected from inundation; lower-lying "softly" developed areas are allowed to transition to wetland or open water habitats, reflecting a scenario in which some coastal development is gradually surrendered to rising seas.
 
