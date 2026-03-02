@@ -24,28 +24,28 @@ Additionally, the repository contains R code converted from ArcGIS Python/ModelB
    - Calls all sub-models in sequence   
 
     2. **DatumAdjustment_v202512.R**
-    - Adjusts tidal datums (HAT, MHHW, MTL, etc.) for sea level rise
-    - Reads datum and SLR scenario tables   
+      - Adjusts tidal datums (HAT, MHHW, MTL, etc.) for sea level rise
+      - Reads datum and SLR scenario tables   
 
     2. **MarshAccretion_v202512.R**
-    - Calculates vertical marsh accretion
-    - Two methods: constant accretion vs. elevation-dependent (Marsh98)
-    - Adjusts topography based on habitat-specific accretion rates   
+      - Calculates vertical marsh accretion
+      - Two methods: constant accretion vs. elevation-dependent (Marsh98)
+      - Adjusts topography based on habitat-specific accretion rates   
 
     2. **HabitatAdjustment_v202512.R** (+ parts 2 & 3)
-    - Core habitat reclassification logic
-    - Uses elevation thresholds and tidal datums
-    - Applies land protection policies
-    - Combines 23 different habitat types   
+      - Core habitat reclassification logic
+      - Uses elevation thresholds and tidal datums
+      - Applies land protection policies
+      - Combines 23 different habitat types   
 
     2. **Ocean2Beach_v202512.R**
-    - Identifies ocean-proximate areas for beach conversion
-    - Creates 500m buffer around ocean/water bodies   
+      - Identifies ocean-proximate areas for beach conversion
+      - Creates 500m buffer around ocean/water bodies   
 
     2. **ProcessFreshwater_v202512.R**
-    - Creates freshwater influence mask
-    - Uses NHD waterbody polygons
-    - Differentiates freshwater vs. saltwater habitats   
+      - Creates freshwater influence mask
+      - Uses NHD waterbody polygons
+      - Differentiates freshwater vs. saltwater habitats   
 
 3. **03_Process_Tiffs.R**
    - Processes individual GeoTiffs to summarize habitats
