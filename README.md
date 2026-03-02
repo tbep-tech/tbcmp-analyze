@@ -13,39 +13,55 @@ Additionally, the repository contains R code converted from ArcGIS Python/ModelB
 ## Components
 
 ### Main Scripts
-1. **data_prep.R**
+1. **01_Data_Prep.R**
    - Assembles base GIS files from known sources to conduct subsequent analyses
    - Saves the created raster files as local tif files that can be referenced later
    - Truncates all files to a bounding box of the 7 county area (inclusive of jurisdictional coastal waters)  
 
-2. **HabitatEvolutionModel_v202512.R**
+2. **02_HabitatEvolutionModel_v202512.R**
    - Main orchestration script
    - Iterates through SLR scenarios by year
    - Calls all sub-models in sequence
 
-3. **DatumAdjustment_v202512.R**
+2.A. **DatumAdjustment_v202512.R**
    - Adjusts tidal datums (HAT, MHHW, MTL, etc.) for sea level rise
    - Reads datum and SLR scenario tables
 
-4. **MarshAccretion_v202512.R**
+2.B. **MarshAccretion_v202512.R**
    - Calculates vertical marsh accretion
    - Two methods: constant accretion vs. elevation-dependent (Marsh98)
    - Adjusts topography based on habitat-specific accretion rates
 
-5. **HabitatAdjustment_v202512.R** (+ parts 2 & 3)
+2.C. **HabitatAdjustment_v202512.R** (+ parts 2 & 3)
    - Core habitat reclassification logic
    - Uses elevation thresholds and tidal datums
    - Applies land protection policies
    - Combines 23 different habitat types
 
-6. **Ocean2Beach_v202512.R**
+2.D. **Ocean2Beach_v202512.R**
    - Identifies ocean-proximate areas for beach conversion
    - Creates 500m buffer around ocean/water bodies
 
-7. **ProcessFreshwater_v202512.R**
+2.E. **ProcessFreshwater_v202512.R**
    - Creates freshwater influence mask
    - Uses NHD waterbody polygons
    - Differentiates freshwater vs. saltwater habitats
+
+3. **03_Process_Tiffs.R**
+   - Processes individual GeoTiffs to summarize habitats
+   - Uses county polygons to subset entire raster extent
+   - Saves summary as simple *.csv files
+
+4. **04_HEM_Change_Summary_by_County.R**
+   - Processes individual *.csv files from above
+   - Develops mean +/- standard deviation from HEM outputs
+   - Assembles a publishes an HTML table of results by county and habitat
+   
+5. **05_Hot_Spot_Analysis.R**
+   - Compares two rasters for change (baseline & HEM output(s))
+   - Develops Sankey diagram of habitat change & V-Measure maps of inhomogeneities
+   - Additional geospatial hot spot analyses a WIP
+
 
 ---
 
@@ -63,6 +79,8 @@ install.packages(c(
   "terra",      # Raster operations
   "sf",         # Vector operations
   "dplyr"       # Data manipulation
+  "networkD3"   # Create Sankey Diagrams of Change
+  "sabre"       # Perform Spatial association between regionalizations using V-measure
 ))
 ```
 
@@ -113,15 +131,15 @@ source("HabitatEvolutionModel_v202512.R")
 HabitatEvolutionModel_v202512()
 ```
 
-### Custom Parameters
+### Run with Custom Parameters
 
 ```r
 HabitatEvolutionModel_v202512(
   SLR_Table = "path/to/SLR_scenarios.dbf",
   Datums_Table = "path/to/datums.dbf",
-  Protect_Developed = TRUE, # to protect developed (PD) areas from conversion or "FALSE" to allow migration (AM) to occur
+  Protect_Developed = TRUE, # to protect developed (PD) areas from conversion or "FALSE" to allow migration (AM) of habitats
   veg = "path/to/habitat_raster.tif",
-  topo = "path/to/dem.tif",
+  topo = "path/to/topo-bathy_dem.tif",
   Juncus_Marsh_Accretion_mm_yr = 3.75, # for low accretion or "4" for high accretion scenarios
   Salt_Marsh_Accretion_mm_yr = 1.6, # for low accretion or "3" for high accretion scenarios
   Mangrove_Accretion_mm_yr = 1.6, # for low accretion or "5" for high accretion scenarios
@@ -130,7 +148,7 @@ HabitatEvolutionModel_v202512(
 )
 ```
 
-### Running Individual Components
+### Running Individual Helper Script Components
 
 ```r
 # Example: Calculate marsh accretion only
@@ -166,7 +184,7 @@ MTL  ─────────────────────────
 MLHW ───────────────────────────  Tidal Flat upper limit
 MLW  ───────────────────────────  Mangrove lower limit
 MLLW ═══════════════════════════  Subtidal / Seagrass boundary
-      -1.5m below MLLW           Deep subtidal
+        -1.5m below MLLW          Deep subtidal
 ```
 
 ### Freshwater vs. Saltwater Differentiation
@@ -182,12 +200,12 @@ MLLW ═════════════════════════
 ### Land Protection Policy
 
 When `Protect_Developed = TRUE`:
-- All developed land (1100, 1200, 1800, 1820, 2100, 2200, 2400, 2550) remains
+- All developed lands remain (1100, 1200, 1800, 1820, 2100, 2200, 2400, 2550)
 - Development prevents habitat migration
 
 When `Protect_Developed = FALSE`:
-- Only development above HAT + SLR is protected
-- Inundated areas can convert to wetlands/water
+- Only developed lands above HAT + SLR are protected
+- Inundated "softly" developed areas can convert to wetlands/water
 
 ---
 

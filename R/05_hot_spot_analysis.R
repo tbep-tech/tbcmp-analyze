@@ -21,10 +21,9 @@ library(here)
 library(terra)
 library(sf)
 library(spdep)
-library(ggplot2)
-library(viridis)
 library(gridExtra)
 library(tidyverse)
+library(networkD3)
 library(spatialEco)
 library(sabre)
 
@@ -35,8 +34,11 @@ library(sabre)
 # Load raster datasets
 # Replace these paths with your actual data
 raster_time1 <- rast("./data/tbcmp_hem_filled.tif")               # Baseline time period (2025)
-raster_time2 <- rast("./data/output/tbcmp_PD_LA_IntHi_2100.tif")  # Later time period (2050, 2080, 2100)
+raster_time2 <- rast("./data/output/low_accretion/tbcmp_PD_LA_IntHi_2100.tif")  # Later time period (2050, 2080, 2100)
 scaled_raster <- rast("./data/tbcmp_base_raster_10m.tif")         # A base raster to rescale the above to a 10m grid size
+hem_class <- read_csv(file = here('data/hem_class_colors.csv')) |>
+  select(Value, ClassName)
+hem_recode <- read_csv(file = here('data/hem_recode.csv'), col_names = FALSE)
 
 # Load county boundaries
 cat("Loading county boundaries...\n")
@@ -46,13 +48,15 @@ counties <- vect(tbcmp_cnt)  # Adjust path if needed (e.g., "./data/tbcmp_cnt.sh
 # Ensure rasters have the same extent and resolution of a base raster that is within memory limits
 if (!compareGeom(raster_time1, scaled_raster, stopOnError = FALSE)) {
   cat("Resampling raster_time1 to match scaled_raster...\n")
-  raster_time1 <- resample(raster_time1, scaled_raster, method = "near")
+  raster_time1 <- resample(raster_time1, scaled_raster, method = "mode")
+  raster_time1 <- classify(raster_time1, hem_recode)  #Simplify coding
   levels(raster_time1) <- hem_class
 }
 
 if (!compareGeom(raster_time2, scaled_raster, stopOnError = FALSE)) {
   cat("Resampling raster_time2 to match scaled_raster...\n")
-  raster_time2 <- resample(raster_time2, scaled_raster, method = "near")
+  raster_time2 <- resample(raster_time2, scaled_raster, method = "mode")
+  raster_time2 <- classify(raster_time2, hem_recode)  #Simplify coding
   levels(raster_time2) <- hem_class
 }
 
@@ -62,9 +66,95 @@ if (!same.crs(counties, raster_time1)) {
   counties <- project(counties, raster_time1)
 }
 
+# Ensure county layer is in same CRS as rasters
+if (!same.crs(counties, raster_time2)) {
+  cat("Reprojecting county boundaries to match raster CRS...\n")
+  counties <- project(counties, raster_time2)
+}
+
 ################################################################################
 # SECTION 2: Calculate Change
 ################################################################################
+
+#Calculate a confusion matrix to compare the pixel changes between the two raster
+cm = table(values(raster_time1), values(raster_time2))
+
+df <- data.frame(cm) |>
+      mutate(Value1 = as.numeric(as.character(Var1)),
+             Value2 = as.numeric(as.character(Var2))) |>
+      left_join(hem_class, by = c("Value1" = "Value")) |>
+      mutate (source = paste(ClassName,", 2025")) |>
+      select(-ClassName) |>
+      filter(Value2 != 0) |>
+      left_join(hem_class, by = c("Value2" = "Value")) |>
+      mutate (target = paste(ClassName,", 2100"),
+              value = Freq*0.00247105) |>            #Convert 10m cell to acres
+      select(source, target, value) |>
+      summarise(value = sum(value),
+                .by = c('source', 'target'))
+
+hem_df <- data.frame(cm) |>
+          mutate(Value1 = as.numeric(as.character(Var1)),
+          Value2 = as.numeric(as.character(Var2))) |>
+          filter(!Value1 %in% c(1100,1800,1900, 5200) &
+                 !Value2 %in% c(0,1100,1800,1900, 5200)) |>
+          left_join(hem_class, by = c("Value1" = "Value")) |>
+          mutate (source = paste(ClassName,", 2025")) |>
+          select(-ClassName) |>
+          filter(Value2 != 0) |>
+          left_join(hem_class, by = c("Value2" = "Value")) |>
+          mutate (target = paste(ClassName,", 2100"),
+                  value = Freq*0.00247105) |>            #Convert 10m cell to acres
+          select(source, target, value) |>
+          summarise(value = sum(value),
+            .by = c('source', 'target'))
+
+nodes <- data.frame(name = c(as.character(df$source), as.character(df$target)) |> unique()) |>
+  mutate(label = gsub(" , 2\\d{3}$", "", name),   # strips ", 2025" or ", 2100"
+         group = LETTERS[row_number()])           #This grouping variable was the only way the custom color scheme (and order) below worked.
+
+df$IDsource = match(df$source, nodes$name)-1
+df$IDtarget = match(df$target, nodes$name)-1
+
+nodes2 <- data.frame(name = c(as.character(hem_df$source), as.character(hem_df$target)) |> unique()) |>
+          mutate(label = gsub(" , 2\\d{3}$", "", name),   # strips ", 2025" or ", 2100"
+          group = LETTERS[row_number()])           #This grouping variable was the only way the custom color scheme (and order) below worked.
+
+hem_df$IDsource = match(hem_df$source, nodes$name)-5
+hem_df$IDtarget = match(hem_df$target, nodes$name)-9
+
+colvec2 <- c("#BEE8FF", "#FFFF73", "#55FF00", "#737300", "#FFFFBE", "#FFAA00", "#FFD37F", "#267300",
+             "#BEE8FF", "#FFFF73", "#55FF00", "#737300", "#AFB017", "#FFFFBE", "#FFAA00", "#FFD37F", "#267300")
+
+
+colvec <- c("#FF7F7F", "#FFBEBE", "#E1E1E1", "#73DFFF", "#BEE8FF", "#FFFF73", "#55FF00", "#737300", "#FFFFBE", "#FFAA00", "#FFD37F", "#267300",
+            "#FF7F7F", "#FFBEBE", "#E1E1E1", "#73DFFF", "#BEE8FF", "#FFFF73", "#55FF00", "#737300", "#AFB017", "#FFFFBE", "#FFAA00", "#FFD37F", "#267300")
+
+my_scale <- paste0(
+  'd3.scaleOrdinal()
+    .domain(["', paste(nodes$group, collapse = '", "'), '"])
+    .range(["', paste(colvec, collapse = '", "'), '"])')
+
+my_scale2 <- paste0(
+  'd3.scaleOrdinal()
+    .domain(["', paste(nodes2$group, collapse = '", "'), '"])
+    .range(["', paste(colvec2, collapse = '", "'), '"])')
+
+p <- sankeyNetwork(Links = df, Nodes = nodes,
+                   Source = "IDsource", Target = "IDtarget",
+                   Value = "value", NodeID = "label", NodeGroup = "group",
+                   height = 800, width = 1000, fontFamily = "Lato",
+                   sinksRight = F, nodeWidth=50, fontSize=12, nodePadding=10, colourScale = my_scale)
+
+p
+
+p2 <- sankeyNetwork(Links = hem_df, Nodes = nodes2,
+                   Source = "IDsource", Target = "IDtarget",
+                   Value = "value", NodeID = "label", NodeGroup = "group",
+                   height = 800, width = 1000, fontFamily = "Lato",
+                   sinksRight = F, nodeWidth=50, fontSize=12, nodePadding=10, colourScale = my_scale2)
+
+p2
 
 #Calculate rudimentary change maps for now using Nowosad & Stepinski 2018 methods...
 
@@ -72,7 +162,12 @@ lc_sabre = vmeasure_calc(raster_time1, raster_time2)
 lc_sabre
 color_ramp = colorRampPalette(c("green","yellow","red"))
 plot(lc_sabre$map2[[2]], col = color_ramp(20))
+plot(lc_sabre$map2[[3]], col = color_ramp(20))
 
+
+################################################################################
+# SECTION 2.5: Calculate Change using Geospatial Stats
+################################################################################
 #Statistic calculations below take long processing times (3+ days)
 
 # Calculate Cohen's Kappa statistic for change detection
@@ -127,7 +222,7 @@ change_values <- change_sf$change
 
 # Create spatial weights matrix (k-nearest neighbors)
 # Adjust k based on your data density
-k <- 8  # Number of nearest neighbors
+k <- 4  # Number of nearest neighbors
 
 cat("Creating spatial weights matrix...\n")
 nb <- knn2nb(knearneigh(coords, k = k))
