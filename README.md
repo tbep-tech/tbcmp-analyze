@@ -358,6 +358,7 @@ gc()  # Garbage collection
 
 ## Online Resources
 
+- [HEM Analysis Workflow Summary](https://tbep-tech.github.io/tbcmp-analyze/hem-workflow.html)
 - [HEM Change Analysis by County](https://tbep-tech.github.io/tbcmp-analyze/hemchange.html)
 
 ---
