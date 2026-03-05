@@ -14,9 +14,9 @@ Additionally, the repository contains R code converted from ArcGIS Python/ModelB
 
 ### Main Scripts
 1. **01_Data_Prep.R**
-   - Assembles base GIS files from known sources to conduct subsequent analyses
-   - Saves the created raster files as local tif files that can be referenced later
-   - Truncates all files to a bounding box of the 7 county area (inclusive of jurisdictional coastal waters)  
+- Assembles base GIS files from known sources to conduct subsequent analyses
+- Saves the created raster files as local tif files that can be referenced later
+- Truncates all files to a bounding box of the 7 county area (inclusive of jurisdictional coastal waters)  
 
 2. **02_HabitatEvolutionModel_v202512.R**
    - Main orchestration script
