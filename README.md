@@ -21,8 +21,8 @@ Additionally, the repository contains R code converted from ArcGIS Python/ModelB
 2. **02_HabitatEvolutionModel_v202512.R**
    - Main orchestration script
    - Iterates through SLR scenarios by year
-   - Calls all sub-models in sequence   
-
+   - Calls all sub-models in sequence
+     
     2. **DatumAdjustment_v202512.R**
       - Adjusts tidal datums (HAT, MHHW, MTL, etc.) for sea level rise
       - Reads datum and SLR scenario tables   
