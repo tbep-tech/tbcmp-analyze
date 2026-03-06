@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Tampa Bay Estuary Program">
-<meta name="dcterms.date" content="2026-02-24">
+<meta name="dcterms.date" content="2026-03-06">
 
 <title>Tampa Bay Coastal Master Plan Habitat Assessments: Habitat Evolution Model Workflow Description</title>
 <style>
@@ -2450,16 +2450,11 @@ background-color: #ea6f17;
   <li><a href="#sea-level-rise-scenarios-and-model-time-horizons" id="toc-sea-level-rise-scenarios-and-model-time-horizons" class="nav-link" data-scroll-target="#sea-level-rise-scenarios-and-model-time-horizons">4. Sea Level Rise Scenarios and Model Time Horizons</a></li>
   <li><a href="#workflow-components-and-script-descriptions" id="toc-workflow-components-and-script-descriptions" class="nav-link" data-scroll-target="#workflow-components-and-script-descriptions">5. Workflow Components and Script Descriptions</a>
   <ul class="collapse">
-  <li><a href="#data_prep.r-data-preparation" id="toc-data_prep.r-data-preparation" class="nav-link" data-scroll-target="#data_prep.r-data-preparation">5.1. 01_data_prep.R — Data Preparation</a></li>
+  <li><a href="#data_prep.r-data-preparation" id="toc-data_prep.r-data-preparation" class="nav-link" data-scroll-target="#data_prep.r-data-preparation">5.1. 01_Data_Prep.R — Data Preparation</a></li>
   <li><a href="#habitatevolutionmodel_v202512.r-master-script" id="toc-habitatevolutionmodel_v202512.r-master-script" class="nav-link" data-scroll-target="#habitatevolutionmodel_v202512.r-master-script">5.2. 02_HabitatEvolutionModel_v202512.R — Master Script</a></li>
-  <li><a href="#marshaccretion_v202512.r-marsh-vertical-accretion-helper-script" id="toc-marshaccretion_v202512.r-marsh-vertical-accretion-helper-script" class="nav-link" data-scroll-target="#marshaccretion_v202512.r-marsh-vertical-accretion-helper-script">5.3. MarshAccretion_v202512.R — Marsh Vertical Accretion Helper Script</a></li>
-  <li><a href="#ocean2beach_v202512.r-ocean-proximity-analysis-helper-script" id="toc-ocean2beach_v202512.r-ocean-proximity-analysis-helper-script" class="nav-link" data-scroll-target="#ocean2beach_v202512.r-ocean-proximity-analysis-helper-script">5.4. Ocean2Beach_v202512.R — Ocean Proximity Analysis Helper Script</a></li>
-  <li><a href="#processfreshwater_v202512.r-freshwater-influence-mask-helper-script" id="toc-processfreshwater_v202512.r-freshwater-influence-mask-helper-script" class="nav-link" data-scroll-target="#processfreshwater_v202512.r-freshwater-influence-mask-helper-script">5.5. ProcessFreshwater_v202512.R — Freshwater Influence Mask Helper Script</a></li>
-  <li><a href="#habitatadjustment_v202512.r-core-habitat-reclassification-helper-script" id="toc-habitatadjustment_v202512.r-core-habitat-reclassification-helper-script" class="nav-link" data-scroll-target="#habitatadjustment_v202512.r-core-habitat-reclassification-helper-script">5.6. HabitatAdjustment_v202512.R — Core Habitat Reclassification Helper Script</a></li>
-  <li><a href="#datumadjustment_v202512.r-tidal-datum-adjustment-helper-script" id="toc-datumadjustment_v202512.r-tidal-datum-adjustment-helper-script" class="nav-link" data-scroll-target="#datumadjustment_v202512.r-tidal-datum-adjustment-helper-script">5.7. DatumAdjustment_v202512.R — Tidal Datum Adjustment Helper Script</a></li>
-  <li><a href="#process_tiffs.r-raster-process-script" id="toc-process_tiffs.r-raster-process-script" class="nav-link" data-scroll-target="#process_tiffs.r-raster-process-script">5.8. 03_process_tiffs.R — Raster process script</a></li>
-  <li><a href="#hem_change_summary_by_county.r-summarize-csv-file-results-script" id="toc-hem_change_summary_by_county.r-summarize-csv-file-results-script" class="nav-link" data-scroll-target="#hem_change_summary_by_county.r-summarize-csv-file-results-script">5.9. 04_HEM_Change_Summary_by_County.R — Summarize csv file results script</a></li>
-  <li><a href="#hot_spot_analysis.r-perform-geospatial-hot-spot-analyses-script" id="toc-hot_spot_analysis.r-perform-geospatial-hot-spot-analyses-script" class="nav-link" data-scroll-target="#hot_spot_analysis.r-perform-geospatial-hot-spot-analyses-script">5.10. 05_hot_spot_analysis.R — Perform geospatial hot spot analyses script</a></li>
+  <li><a href="#process_tiffs.r-raster-process-script" id="toc-process_tiffs.r-raster-process-script" class="nav-link" data-scroll-target="#process_tiffs.r-raster-process-script">5.3. 03_Process_Tiffs.R — Raster process script</a></li>
+  <li><a href="#hem_change_summary_by_county.r-summarize-csv-file-results-script" id="toc-hem_change_summary_by_county.r-summarize-csv-file-results-script" class="nav-link" data-scroll-target="#hem_change_summary_by_county.r-summarize-csv-file-results-script">5.4. 04_HEM_Change_Summary_by_County.R — Summarize csv file results script</a></li>
+  <li><a href="#hot_spot_analysis.r-perform-geospatial-hot-spot-analyses-script" id="toc-hot_spot_analysis.r-perform-geospatial-hot-spot-analyses-script" class="nav-link" data-scroll-target="#hot_spot_analysis.r-perform-geospatial-hot-spot-analyses-script">5.5. 05_Hot_Spot_Analysis.R — Perform geospatial hot spot analyses script</a></li>
   </ul></li>
   <li><a href="#model-outputs-and-results-summary" id="toc-model-outputs-and-results-summary" class="nav-link" data-scroll-target="#model-outputs-and-results-summary">6. Model Outputs and Results Summary</a>
   <ul class="collapse">
@@ -2504,7 +2499,7 @@ background-color: #ea6f17;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">February 24, 2026</p>
+      <p class="date">March 6, 2026</p>
     </div>
   </div>
   
@@ -2549,7 +2544,7 @@ Pinellas Park, FL 33782
 <li><strong>R/</strong> — Contains all analytical scripts constituting the Habitat Evolution Model workflow.</li>
 <li><strong>data-raw/</strong> — Stores unprocessed source data files downloaded or otherwise acquired from external agencies, including raster inputs and tabular parameter files.</li>
 <li><strong>data/</strong> — Contains processed intermediate and final data products generated by the workflow scripts.</li>
-<li><strong>docs/</strong> — Hosts rendered HTML reporting outputs, including the publicly accessible <a href="https://tbep-tech.github.io/tbcmp-analyze/hemchange.html">HEM Land Use Change Summary</a>, which provides county-level tabular summaries of projected habitat transitions given two land management scenarios, two accretion scenarios and three SLR scenarios.</li>
+<li><strong>docs/</strong> — Hosts rendered HTML reporting outputs, including <a href="https://tbep-tech.github.io/tbcmp-analyze/hem-workflow.html">this document</a> and the publicly accessible <a href="https://tbep-tech.github.io/tbcmp-analyze/hemchange.html">HEM Land Use Change Summary</a>, which provides county-level tabular summaries of projected habitat transitions given two land management scenarios, two accretion scenarios and three SLR scenarios.</li>
 <li><strong>README.md</strong> — Primary documentation describing the repository purpose, component scripts, input requirements, and usage instructions</li>
 <li><strong>CONVERSION_CUMMARY.md</strong> — Technical summary documenting the conversion of the main Habitat Evolution Model from ArcGIS ModelBuilder to R scripts</li>
 <li><strong>tbcmp-analyze.Rproj</strong> — RStudio project file defining the working directory environment</li>
@@ -2567,7 +2562,7 @@ Pinellas Park, FL 33782
 <ul>
 <li><strong>Sea Level Rise Scenario Table (.csv):</strong> Contains Year and SLR columns specifying projected SLR values in meters for each modeled year. SLR scenarios are derived from the NOAA Sea Level Rise Calculator for <a href="https://coast.noaa.gov/sealevelcalculator/">St. Petersburg, FL (Station ID: 8726520)</a>.</li>
 <li><strong>Tidal Datums Table (.csv):</strong> Contains tidal benchmark elevations (HAT, MHHW, MHW, MTL, MLHW, MLW, MLLW) sourced from NOAA tidal station records for <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8726520">St. Petersburg, FL (Station ID: 8726520)</a>.</li>
-<li><strong>Vegetation/Habitat Raster:</strong> An integer-coded raster representing current habitat and land use classifications, processed at 2-meter resolution across the seven-county project area. The primary source is the 2023 Southwest Florida Water Management District (SWFWMD) land use land cover dataset and seagrass (and other subtidal habitat) coverages.</li>
+<li><strong>Vegetation/Habitat Raster:</strong> An integer-coded raster representing current habitat and land use classifications, processed at 2-meter resolution across the seven-county project area. The primary source is the <a href="https://swfwmd.maps.arcgis.com/apps/webappviewer/index.html?id=ff37f69f0c5744799e825f7b16586dc1">2023 Southwest Florida Water Management District (SWFWMD) land use land cover dataset</a> and <a href="https://data-swfwmd.opendata.arcgis.com/search?groupIds=d9a4213eb9ea4713bb710e03bdcc6648">seagrass (and other subtidal habitat) coverages</a>.</li>
 <li><strong>Digital Elevation Model (DEM):</strong> An elevation raster in meters (NAVD88) at 2-meter resolution, co-registered with the habitat raster. NoData values are assigned a value of -999. The <a href="https://fgdl.org/ords/r/prod/fgdl-current/catalog">FGDL FLDEM statewide DEM</a> coverage was merged with <a href="https://www.ncei.noaa.gov/products/coastal-elevation-models">NOAA’s continuously updated DEM</a> to derive a seamless DEM coverage across the subtidal and uplands of the seven county project area.</li>
 <li><strong>Freshwater Polygon (optional but recommended):</strong> A polygon layer derived from the <a href="https://geodata.dep.state.fl.us/datasets/6d08dcb218364608988457fc1aeab395_5/explore?location=28.139900%2C-84.864200%2C5">Florida National Hydrography Dataset (NHD) major river</a> features, used to differentiate freshwater-influenced areas from saltwater-dominated zones.</li>
 </ul>
@@ -2590,7 +2585,6 @@ Pinellas Park, FL 33782
 <section id="workflow-components-and-script-descriptions" class="level2">
 <h2 class="anchored" data-anchor-id="workflow-components-and-script-descriptions">5. Workflow Components and Script Descriptions</h2>
 <p>The Habitat Evolution Model is implemented across seven primary R scripts, each responsible for a discrete analytical function. The scripts are modular by design, allowing individual components to be executed independently for testing and validation, or sequentially through the master orchestration script for full model runs(<a href="https://github.com/tbep-tech/tbcmp-analyze/blob/main/R/02_HabitatEvolutionModel_v202512.R">02_HabitatEvolutionModel_v202512.R</a>). Table 1 provides a summary of each script and its outputs.</p>
-<p><strong>Table 1.</strong> <em>Summary of Habitat Evolution Model scripts, functions, and primary outputs.</em></p>
 <div class="cell">
 <div id="tbl-scripts" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2614,7 +2608,7 @@ Table 1: Summary of Habitat Evolution Model scripts, functions, and primary out
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">01_data_prep.R</td>
+<td style="text-align: left;">01_Data_Prep.R</td>
 <td style="text-align: left;">Assembles and reprojects base GIS datasets; truncates files to 7-county bounding box</td>
 <td style="text-align: left;">Local .tif raster files</td>
 </tr>
@@ -2649,7 +2643,7 @@ Table 1: Summary of Habitat Evolution Model scripts, functions, and primary out
 <td style="text-align: left;">habitat_{year}.tif per SLR scenario</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">03_process_tiffs.R</td>
+<td style="text-align: left;">03_Process_Tiffs.R</td>
 <td style="text-align: left;">Processes individual HEM output *.tif files for each county and summarizes the HEM code pixel values into discrete csv files for further summary</td>
 <td style="text-align: left;">Individual *.csv files summarizing raster pixel values</td>
 </tr>
@@ -2659,7 +2653,7 @@ Table 1: Summary of Habitat Evolution Model scripts, functions, and primary out
 <td style="text-align: left;">HTML Summary table of acreage changes by County</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">05_hot_spot_analysis.R</td>
+<td style="text-align: left;">05_Hot_Spot_Analysis.R</td>
 <td style="text-align: left;">Attempts to use various geospatial statistics to identify hot spots of change between two rasters used in the prior HEM assessments</td>
 <td style="text-align: left;">Hot Spot maps of change</td>
 </tr>
@@ -2671,27 +2665,30 @@ Table 1: Summary of Habitat Evolution Model scripts, functions, and primary out
 </div>
 </div>
 <section id="data_prep.r-data-preparation" class="level3">
-<h3 class="anchored" data-anchor-id="data_prep.r-data-preparation">5.1. 01_data_prep.R — Data Preparation</h3>
+<h3 class="anchored" data-anchor-id="data_prep.r-data-preparation">5.1. 01_Data_Prep.R — Data Preparation</h3>
 <p>The data preparation script assembles the full suite of base GIS datasets required by the Habitat Evolution Model. Using the R packages <code>curl</code> and <code>tidycensus</code>, datasets are acquired programmatically from known agency web endpoints where feasible. All raster datasets are spatially constrained to a bounding box encompassing the seven-county coastal project area, inclusive of jurisdictional coastal waters, and saved as local GeoTIFF (.tif) files for subsequent model use. Metadata documentation for each dataset is maintained following the Ecological Metadata Language (EML) standard, consistent with TBEP data management procedures (<a href="https://drive.google.com/file/d/1vO4B8DJATgCSV1qOxZz-kN6Uj1BrgNsg/view?usp=sharing">Beck et al. 2021</a>).</p>
 </section>
 <section id="habitatevolutionmodel_v202512.r-master-script" class="level3">
 <h3 class="anchored" data-anchor-id="habitatevolutionmodel_v202512.r-master-script">5.2. 02_HabitatEvolutionModel_v202512.R — Master Script</h3>
 <p>The master orchestration script serves as the primary entry point for full model execution. It reads the SLR scenario table, iterates through each projection year in sequence, and calls all sub-model scripts in the appropriate order: datum adjustment, marsh accretion, freshwater processing, ocean proximity, and habitat reclassification. For each projection year and SLR scenario, the script writes a classified habitat raster (<code>habitat_{year}.tif</code>) to the <code>outputs/</code> directory. These annual outputs constitute the primary deliverable of the Habitat Evolution Model and serve as inputs to the county-level change analysis reported in the HEM Change Summary (Table 2).</p>
+<section id="datumadjustment_v202512.r-tidal-datum-adjustment-helper-script" class="level4">
+<h4 class="anchored" data-anchor-id="datumadjustment_v202512.r-tidal-datum-adjustment-helper-script">5.2.1. DatumAdjustment_v202512.R — Tidal Datum Adjustment Helper Script</h4>
+<p>This script reads the tidal datums and SLR scenario tables and calculates adjusted tidal benchmark elevations for each modeled projection year. The seven tidal datums (HAT, MHHW, MHW, MTL, MLHW, MLW, MLLW) are each incremented by the corresponding SLR value, effectively translating the vertical reference frame of the model forward through time. These adjusted datums are passed to the habitat reclassification module to ensure that habitat-elevation relationships are evaluated against the appropriate tidal benchmarks for each future scenario.</p>
 </section>
-<section id="marshaccretion_v202512.r-marsh-vertical-accretion-helper-script" class="level3">
-<h3 class="anchored" data-anchor-id="marshaccretion_v202512.r-marsh-vertical-accretion-helper-script">5.3. MarshAccretion_v202512.R — Marsh Vertical Accretion Helper Script</h3>
+<section id="marshaccretion_v202512.r-marsh-vertical-accretion-helper-script" class="level4">
+<h4 class="anchored" data-anchor-id="marshaccretion_v202512.r-marsh-vertical-accretion-helper-script">5.2.2. MarshAccretion_v202512.R — Marsh Vertical Accretion Helper Script</h4>
 <p>The marsh accretion module calculates the annual vertical accumulation of sediment and organic matter for tidal wetland habitats, adjusting the DEM surface accordingly before habitat transitions are evaluated. The script supports two accretion methodologies: a constant-rate approach and an elevation-dependent approach, which scales accretion rates based on inundation frequency. Habitat-specific accretion rates are configurable parameters, with default low values of 3.75 mm/year for Juncus marsh, 1.6 mm/year for salt marsh, and 1.6 mm/year for mangroves. High accretion scenarios use 4.0 mm/year for Juncus marsh, 3.0 mm/year for high salt marsh, and 5.0 mm/year for mangroves. The accreted topography surface is saved as an intermediate raster (<code>marshac1_{year}.tif</code>) and used as input to the habitat adjustment module.</p>
 </section>
-<section id="ocean2beach_v202512.r-ocean-proximity-analysis-helper-script" class="level3">
-<h3 class="anchored" data-anchor-id="ocean2beach_v202512.r-ocean-proximity-analysis-helper-script">5.4. Ocean2Beach_v202512.R — Ocean Proximity Analysis Helper Script</h3>
+<section id="ocean2beach_v202512.r-ocean-proximity-analysis-helper-script" class="level4">
+<h4 class="anchored" data-anchor-id="ocean2beach_v202512.r-ocean-proximity-analysis-helper-script">5.2.3. Ocean2Beach_v202512.R — Ocean Proximity Analysis Helper Script</h4>
 <p>This script identifies areas proximate to open ocean or large water bodies that may be subject to beach formation or dune migration under sea level rise. A 500-meter buffer is generated around ocean and estuarine water bodies using the <code>sf</code> package’s <code>st_buffer()</code> function. The resulting ocean proximity mask (<code>oceancheck.tif</code>) is applied during habitat reclassification to enable appropriate conversion of low-elevation coastal areas to beach and dune habitats where conditions are met.</p>
 </section>
-<section id="processfreshwater_v202512.r-freshwater-influence-mask-helper-script" class="level3">
-<h3 class="anchored" data-anchor-id="processfreshwater_v202512.r-freshwater-influence-mask-helper-script">5.5. ProcessFreshwater_v202512.R — Freshwater Influence Mask Helper Script</h3>
+<section id="processfreshwater_v202512.r-freshwater-influence-mask-helper-script" class="level4">
+<h4 class="anchored" data-anchor-id="processfreshwater_v202512.r-freshwater-influence-mask-helper-script">5.2.4. ProcessFreshwater_v202512.R — Freshwater Influence Mask Helper Script</h4>
 <p>The freshwater processing script creates a binary raster mask (<code>freshwater2.tif</code>) delineating areas under freshwater influence, based on the Florida NHD waterbody polygon layer. Pixels within NHD-defined waterbody features receive a value of 1 (freshwater), while those outside receive a value of 0 (saltwater/estuarine). This differentiation is critical to the habitat reclassification logic, as freshwater influence determines eligibility for specific habitat types: Juncus marsh and tidal flat formation are enabled in freshwater zones, while mangrove establishment is restricted to saltwater-influenced areas.</p>
 </section>
-<section id="habitatadjustment_v202512.r-core-habitat-reclassification-helper-script" class="level3">
-<h3 class="anchored" data-anchor-id="habitatadjustment_v202512.r-core-habitat-reclassification-helper-script">5.6. HabitatAdjustment_v202512.R — Core Habitat Reclassification Helper Script</h3>
+<section id="habitatadjustment_v202512.r-core-habitat-reclassification-helper-script-parts-2-3" class="level4">
+<h4 class="anchored" data-anchor-id="habitatadjustment_v202512.r-core-habitat-reclassification-helper-script-parts-2-3">5.2.5. HabitatAdjustment_v202512.R — Core Habitat Reclassification Helper Script (+ Parts 2 &amp; 3)</h4>
 <p>The habitat adjustment module constitutes the core scientific logic of the Habitat Evolution Model. Implemented across three script parts due to the complexity of the decision tree, this module reclassifies each habitat pixel based on its adjusted elevation relative to the SLR-modified tidal datums, its proximity to water bodies, its freshwater influence status, and applicable land development protection policies.</p>
 <p>The elevation-based habitat zonation follows a hierarchical tidal datum framework:</p>
 <ul>
@@ -2705,20 +2702,17 @@ Table 1: Summary of Habitat Evolution Model scripts, functions, and primary out
 </ul>
 <p>Land development protection policies are configurable via the <code>Protect_Developed</code> parameter. When protection is enabled, all developed land use codes (1100, 1200, 1800, 1820, 2100, 2200, 2400, 2550) are preserved in place regardless of inundation status, reflecting the assumption that coastal engineering and infrastructure protection will prevent habitat migration into any developed areas. When protection is disabled, only “softly” developed lands above the HAT + SLR threshold are retained. Otherwise, “softly” developed inundated areas may convert to wetland or open water habitats. The model is run under both Protected Development (PD) and Allowed Migration (AM) scenarios to bound uncertainty in projected habitat outcomes with divergent future land management policies.</p>
 </section>
-<section id="datumadjustment_v202512.r-tidal-datum-adjustment-helper-script" class="level3">
-<h3 class="anchored" data-anchor-id="datumadjustment_v202512.r-tidal-datum-adjustment-helper-script">5.7. DatumAdjustment_v202512.R — Tidal Datum Adjustment Helper Script</h3>
-<p>This script reads the tidal datums and SLR scenario tables and calculates adjusted tidal benchmark elevations for each modeled projection year. The seven tidal datums (HAT, MHHW, MHW, MTL, MLHW, MLW, MLLW) are each incremented by the corresponding SLR value, effectively translating the vertical reference frame of the model forward through time. These adjusted datums are passed to the habitat reclassification module to ensure that habitat-elevation relationships are evaluated against the appropriate tidal benchmarks for each future scenario.</p>
 </section>
 <section id="process_tiffs.r-raster-process-script" class="level3">
-<h3 class="anchored" data-anchor-id="process_tiffs.r-raster-process-script">5.8. 03_process_tiffs.R — Raster process script</h3>
+<h3 class="anchored" data-anchor-id="process_tiffs.r-raster-process-script">5.3. 03_Process_Tiffs.R — Raster process script</h3>
 <p>Processes raster GeoTIFF files as part of the analysis pipeline. This script reads raw or downloaded TIFF raster files, applies spatial and/or value transformations (such as cropping, masking, reprojecting, or reclassifying), and outputs derived csv files that summarize the HEM code pixel counts by county for downstream analysis. It serves as an intermediate step between the raw HEM outputs and final statistical or spatial summaries (by county) used to assess coastal habitat changes across the project area.</p>
 </section>
 <section id="hem_change_summary_by_county.r-summarize-csv-file-results-script" class="level3">
-<h3 class="anchored" data-anchor-id="hem_change_summary_by_county.r-summarize-csv-file-results-script">5.9. 04_HEM_Change_Summary_by_County.R — Summarize csv file results script</h3>
+<h3 class="anchored" data-anchor-id="hem_change_summary_by_county.r-summarize-csv-file-results-script">5.4. 04_HEM_Change_Summary_by_County.R — Summarize csv file results script</h3>
 <p>Summarizes HEM outputs as csv files to indicate change from baseline data aggregated by county across the project area. This script takes processed habitat raster tabular data and calculates gains, losses, and net changes in coastal habitat extent (such as seagrass, wetlands, or other mapped habitat types) for each county in the study area. Results are summarized into a tabbed html table that allow regional comparisons of habitat change over time, supporting reporting and management decisions for the Tampa Bay Coastal Management Plan.</p>
 </section>
 <section id="hot_spot_analysis.r-perform-geospatial-hot-spot-analyses-script" class="level3">
-<h3 class="anchored" data-anchor-id="hot_spot_analysis.r-perform-geospatial-hot-spot-analyses-script">5.10. 05_hot_spot_analysis.R — Perform geospatial hot spot analyses script</h3>
+<h3 class="anchored" data-anchor-id="hot_spot_analysis.r-perform-geospatial-hot-spot-analyses-script">5.5. 05_Hot_Spot_Analysis.R — Perform geospatial hot spot analyses script</h3>
 <p>Performs spatial hot spot analysis to identify geographic clusters of significant coastal habitat gain or loss across the project area. Using statistical methods such as Getis-Ord Gi* or similar spatial autocorrelation techniques, this script detects areas where habitat change is significantly concentrated — pinpointing both hot spots (areas of notable loss or degradation) and cold spots (areas of notable gain or recovery). Outputs include mapped spatial statistics to guide targeted conservation and restoration efforts (still in development).</p>
 </section>
 </section>
@@ -2732,43 +2726,42 @@ Table 1: Summary of Habitat Evolution Model scripts, functions, and primary out
 <section id="representative-model-results" class="level3">
 <h3 class="anchored" data-anchor-id="representative-model-results">6.2 Representative Model Results</h3>
 <p>Table 2 presents a representative selection of projected habitat areas (in hectares) for the Tampa Bay region under the modeled SLR scenarios, illustrating the magnitude and direction of anticipated habitat transitions. Results span the baseline condition (2025) through projections from 2050 to 2100 under the PD and AM land policy scenarios and the low and high accretion scenarios. As previously reported under accelerating sea level rise (<a href="https://doi.org/10.1007/s13157-019-01137-y">Sheehan et al. 2019</a>), substantial changes in high marsh and seagrass habitats are expected, while mangrove and open water extents are projected to expand significantly in the near-to-mid term before declining at higher SLR increments.</p>
-<p><strong>Table 2.</strong> <em>Representative projected habitat areas (hectares) for the seven-county Tampa Bay TBCMP project area under modeled SLR scenarios.</em></p>
 <div class="cell">
 <div id="tbl-results" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 2: Representative projected habitat areas (hectares) for the seven-county Tampa Bay TBCMP project area under modeled SLR scenarios.
+Table 2: Range of projected habitat coverage (acres) for the seven-county Tampa Bay TBCMP project area under modeled SLR scenarios.
 </figcaption>
 <div aria-describedby="tbl-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
 <table class="do-not-create-environment cell caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 20%">
-<col style="width: 16%">
-<col style="width: 22%">
-<col style="width: 20%">
-<col style="width: 20%">
+<col style="width: 19%">
+<col style="width: 15%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">HEM Category</th>
 <th style="text-align: center;">Baseline (acres)</th>
 <th style="text-align: center;">2050 Projection (acres)</th>
-<th style="text-align: center;">2080 Projection (ha)</th>
-<th style="text-align: center;">2100 Projection (ha)</th>
+<th style="text-align: center;">2080 Projection (acres)</th>
+<th style="text-align: center;">2100 Projection (acres)</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Subtidal - Tidal Flat</td>
-<td style="text-align: center;">47,753</td>
+<td style="text-align: center;">47,755</td>
 <td style="text-align: center;">583 - 1,281</td>
 <td style="text-align: center;">1,546 - 4,539</td>
 <td style="text-align: center;">1,048 - 4,215</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Subtidal – Seagrass</td>
-<td style="text-align: center;">460,171</td>
+<td style="text-align: center;">460,168</td>
 <td style="text-align: center;">174,844 - 182,980</td>
 <td style="text-align: center;">134,317 - 181,532</td>
 <td style="text-align: center;">117,658 - 189,042</td>
@@ -2803,7 +2796,7 @@ Table 2: Representative projected habitat areas (hectares) for the seven-county
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Freshwater Wetlands</td>
-<td style="text-align: center;">486,598</td>
+<td style="text-align: center;">486,609</td>
 <td style="text-align: center;">459,386 - 464,927</td>
 <td style="text-align: center;">433,188 - 454,158</td>
 <td style="text-align: center;">417,976 - 448,089</td>
@@ -2838,7 +2831,6 @@ Table 2: Representative projected habitat areas (hectares) for the seven-county
 <section id="translation-from-arcgis-model-builder-scripts-to-open-source-r" class="level3">
 <h3 class="anchored" data-anchor-id="translation-from-arcgis-model-builder-scripts-to-open-source-r">7.2 Translation from ArcGIS Model Builder Scripts to Open-Source R</h3>
 <p>A defining characteristic of this workflow is its complete translation from a proprietary ArcGIS ModelBuilder and ArcPython environment to the open-source R programming language. This translation was conducted to align the model with TBEP’s open data science philosophy and to enable version-controlled, automated, and reproducible execution through GitHub Actions. Table 3 summarizes the functional equivalences between ArcGIS operations and their R/terra counterparts implemented in this workflow.</p>
-<p><strong>Table 3.</strong> <em>Functional equivalences between ArcGIS/Python operations and R/terra implementations.</em></p>
 <div class="cell">
 <div id="tbl-arcgis" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
