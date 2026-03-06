@@ -1,0 +1,271 @@
+/*-- scss:defaults --*/
+
+// TBEP Coastal Habitat Presentation Theme
+// Quarto Reveal.js Custom SCSS
+
+// Color Palette
+$primary:    #065A82;
+$secondary:  #1C7293;
+$accent:     #02C39A;
+$dark:       #021d2e;
+$light-bg:   #f5f9fc;
+$text-main:  #1a2e3b;
+$muted:      #6b8fa3;
+
+/*-- scss:rules --*/
+
+/*-- Color Palette (legacy comments) --*/
+/*-- Font Import --*/
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
+
+/*-----------------------------------------------
+  BASE REVEAL.JS OVERRIDES
+------------------------------------------------*/
+.reveal {
+  font-family: 'Lato', 'Calibri', sans-serif;
+  font-size: 22px;
+  color: $text-main;
+}
+
+.reveal .slides {
+  text-align: left;
+}
+
+/*-- Title Slide --*/
+.reveal .title-slide,
+.reveal .quarto-title-block {
+  background-color: $primary;
+  color: white;
+  text-align: center;
+
+  h1.title {
+    font-family: 'Merriweather', Georgia, serif;
+    font-size: 2.2em;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.2em;
+  }
+
+  .subtitle {
+    font-size: 1.2em;
+    font-weight: 300;
+    color: rgba(white, 0.88);
+    margin-bottom: 1em;
+  }
+
+  .author, .date {
+    font-size: 0.95em;
+    color: rgba(white, 0.75);
+  }
+}
+
+/*-- Slide Headings --*/
+.reveal h2 {
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 1.45em;
+  font-weight: 700;
+  color: $primary;
+  padding-bottom: 0.2em;
+  margin-bottom: 0.6em;
+  border-bottom: 3px solid $accent;
+}
+
+.reveal h3 {
+  font-family: 'Lato', sans-serif;
+  font-size: 1.05em;
+  font-weight: 700;
+  color: $secondary;
+  margin-top: 0.8em;
+  margin-bottom: 0.3em;
+}
+
+.reveal h4 {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.95em;
+  font-weight: 700;
+  color: $text-main;
+  margin-bottom: 0.3em;
+}
+
+/*-- Body text --*/
+.reveal p, .reveal li {
+  font-size: 0.9em;
+  line-height: 1.55;
+  color: $text-main;
+}
+
+.reveal ul {
+  margin-left: 1em;
+}
+
+.reveal ul li {
+  margin-bottom: 0.35em;
+}
+
+.reveal strong {
+  color: $primary;
+  font-weight: 700;
+}
+
+.reveal em {
+  color: $muted;
+}
+
+/*-- Tables --*/
+.reveal table {
+  font-size: 0.78em;
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 0.5em;
+}
+
+.reveal table th {
+  background-color: $primary;
+  color: white;
+  padding: 0.45em 0.65em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.reveal table td {
+  padding: 0.35em 0.65em;
+  border-bottom: 1px solid #d0e3ef;
+  color: $text-main;
+}
+
+.reveal table tr:nth-child(even) td {
+  background-color: #edf4fa;
+}
+
+/*-- Task Cards (Task Overview slide) --*/
+.task-card {
+  background: rgba(white, 0.15);
+  border: 2px solid rgba(white, 0.4);
+  border-radius: 10px;
+  padding: 1.2em 1.4em;
+  margin-bottom: 1em;
+  color: white;
+  font-size: 0.95em;
+  line-height: 1.5;
+
+  strong {
+    display: block;
+    font-size: 2em;
+    font-weight: 900;
+    color: $accent;
+    line-height: 1.1;
+    margin-bottom: 0.2em;
+  }
+}
+
+/*-- Repository Badge --*/
+.repo-badge {
+  background: #e6f3fa;
+  border-left: 4px solid $secondary;
+  padding: 0.4em 0.8em;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.8em;
+  color: $secondary;
+  font-family: 'Courier New', monospace;
+  margin-top: 0.8em;
+  display: inline-block;
+}
+
+/*-- Citation / footer note --*/
+.footer-note {
+  font-size: 0.7em;
+  color: $muted;
+  margin-top: 1em;
+  font-style: italic;
+}
+
+.cite-note {
+  font-size: 0.72em;
+  color: $muted;
+  margin-top: 0.6em;
+  font-style: italic;
+}
+
+/*-- Questions / Closing Slide --*/
+.questions-slide {
+  text-align: center;
+  color: white;
+  margin-top: 1em;
+
+  h3 {
+    font-family: 'Merriweather', Georgia, serif;
+    font-size: 1.6em;
+    font-weight: 700;
+    color: $accent;
+    letter-spacing: 0.05em;
+  }
+
+  p {
+    color: rgba(white, 0.85);
+    font-size: 1em;
+  }
+
+  strong {
+    color: white;
+    font-size: 1.05em;
+  }
+
+  hr {
+    border-color: rgba(white, 0.25);
+    margin: 0.8em 2em;
+  }
+}
+
+/*-- Background colors for specific slides --*/
+.reveal section[data-background-color="#065A82"] {
+  h2 {
+    color: white;
+    border-bottom-color: $accent;
+  }
+
+  h3 {
+    color: rgba(white, 0.85);
+  }
+
+  p, li {
+    color: rgba(white, 0.85);
+  }
+}
+
+/*-- Slide footer --*/
+.reveal .footer {
+  font-size: 0.65em;
+  color: $muted;
+}
+
+/*-- Slide number --*/
+.reveal .slide-number {
+  background-color: $primary;
+  color: white;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 0.65em;
+}
+
+/*-- Code blocks --*/
+.reveal pre code {
+  font-size: 0.75em;
+  border-radius: 6px;
+}
+
+/*-- Column divider --*/
+.reveal .columns {
+  gap: 1.5em;
+}
+
+/*-- Italic emphasis callout (for key stats) --*/
+.reveal blockquote {
+  border-left: 4px solid $accent;
+  background: #e6f3fa;
+  padding: 0.6em 1em;
+  border-radius: 0 8px 8px 0;
+  color: $primary;
+  font-style: normal;
+  font-size: 0.9em;
+}

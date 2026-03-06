@@ -4,13 +4,13 @@
     <GDALRasterAttributeTable tableType="thematic">
       <FieldDefn index="0">
         <Name>Value</Name>
-        <Type>0</Type>
-        <Usage>0</Usage>
+        <Type typeAsString="Integer">0</Type>
+        <Usage usageAsString="Generic">0</Usage>
       </FieldDefn>
       <FieldDefn index="1">
         <Name>ClassName</Name>
-        <Type>2</Type>
-        <Usage>0</Usage>
+        <Type typeAsString="String">2</Type>
+        <Usage usageAsString="Generic">0</Usage>
       </FieldDefn>
       <Row index="0">
         <F>1100</F>
@@ -81,18 +81,22 @@
         <F>High Salt Marsh</F>
       </Row>
       <Row index="17">
+        <F>6425</F>
+        <F>Juncus Marsh</F>
+      </Row>
+      <Row index="18">
         <F>6510</F>
         <F>Subtidal - Tidal Flat</F>
       </Row>
-      <Row index="18">
+      <Row index="19">
         <F>6600</F>
         <F>Salt Barren</F>
       </Row>
-      <Row index="19">
+      <Row index="20">
         <F>7100</F>
         <F>Beach - Dune</F>
       </Row>
-      <Row index="20">
+      <Row index="21">
         <F>9113</F>
         <F>Subtidal - Seagrass</F>
       </Row>
