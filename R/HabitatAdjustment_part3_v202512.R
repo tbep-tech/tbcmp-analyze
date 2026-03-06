@@ -29,13 +29,13 @@ HabitatAdjustment_part3 <- function(
     FW_Swamp,
     seagrass
 ) {
-  
+
   # =========================================================================
   # SECTION 6: COMBINE ALL HABITATS
   # =========================================================================
-  
+
   cat("\nSection 6: Combining all habitat classifications...\n")
-  
+
   # Habitat priority order (from highest to lowest priority):
   # 1. Developed Hard Surface (1200)
   # 2. Developed Pervious (1100)
@@ -60,7 +60,7 @@ HabitatAdjustment_part3 <- function(
   # 21. Freshwater Marsh (6410)
   # 22. Freshwater Swamp (6110)
   # 23. Seagrass (9113)
-  
+
   # Use nested ifel statements to implement priority
   combined_habitats <- ifel(
     Upland_Developed_hard == 1200, 1200,
@@ -132,20 +132,21 @@ HabitatAdjustment_part3 <- function(
       )
     )
   )
-  
+
   # =========================================================================
   # SECTION 7: SAVE OUTPUT
   # =========================================================================
-  
+
   cat("\nSection 7: Saving adjusted habitats...\n")
-  
+
   if (!is.null(Habitats_Adjusted)) {
     cat(sprintf("  Output path: %s\n", Habitats_Adjusted))
-    writeRaster(combined_habitats, Habitats_Adjusted, overwrite = TRUE)
+    levels(combined_habitats) <- hem_class
+    writeRaster(combined_habitats, Habitats_Adjusted, overwrite = TRUE, datatype = "INT2U", wopt = list(gdal = c("RAT=YES", "COMPRESS=LZW", "PREDICTOR=2")))
     cat("  Successfully saved!\n")
   }
-  
+
   cat("\nHabitat adjustment complete!\n")
-  
+
   return(combined_habitats)
 }

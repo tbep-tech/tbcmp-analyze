@@ -56,7 +56,9 @@ tbcmp_raster_10m <- terra::rast(extent = bb,     #Optional workflow to create ba
 values(tbcmp_raster_10m) <- 0 # Fill an empty raster using a 10m grid space for subsequent hot spot processing
 
 tbcmp_raster_GOM <- tbcmp_raster # Create a masking raster for open Gulf waters for where no LULC info exists
+tbcmp_raster_mask <- tbcmp_raster
 values(tbcmp_raster_GOM) <- 5400 # Fill it with the Open Water HEM code
+values(tbcmp_raster_mask) <- 0   # Create a raster mask with all 0 values
 
 save(tbcmp_cnt, file = here('data/tbcmp_cnt.Rdata'), compress = 'xz')
 
@@ -70,26 +72,23 @@ writeRaster(tbcmp_raster_10m, filename = here('data/tbcmp_base_raster_10m.tif'),
 lulc2023 <- st_read("T:/05_GIS/SWFWMD/LULC_2023/LANDUSELANDCOVER2023.shp") |>
             st_transform(prj) |>
             dplyr::rename(FLUCCSDESC = FLUCSDESC) |>
-            dplyr::group_by(FLUCCSCODE, FLUCCSDESC) |>
-            dplyr::summarise()
+            dplyr::filter(!FLUCCSCODE %in% c(5400, 5720)) |>
+            dplyr::summarise(across(geometry, st_union), .by = c(FLUCCSCODE, FLUCCSDESC))
 
 tbsg2024 <- st_read("T:/05_GIS/TBEP/TBCMP/Seagrass_in_2024.shp") |>
             st_transform(prj) |>
-            dplyr::group_by(FLUCCSCODE, FLUCCSDESC) |>
-            dplyr::summarise() |>
+            dplyr::summarise(across(geometry, st_union), .by = c(FLUCCSCODE, FLUCCSDESC)) |>
             dplyr::filter(FLUCCSCODE != 0)
 
 spsg2024 <- st_read("T:/05_GIS/TBEP/TBCMP/Seagrass_in_2024_for_the_Springs_Coast.shp") |>
             st_transform(prj) |>
-            dplyr::group_by(FLUCCSCODE, FLUCCSDESC) |>
-            dplyr::summarise() |>
+            dplyr::summarise(across(geometry, st_union), .by = c(FLUCCSCODE, FLUCCSDESC)) |>
             dplyr::filter(FLUCCSCODE != 0)
 
 sg_dif <- st_difference(tbsg2024, st_union(spsg2024))
 
 sg2024 <- bind_rows(spsg2024, sg_dif) |>
-          group_by(FLUCCSCODE, FLUCCSDESC) |>
-          summarise()
+          dplyr::summarise(across(geometry, st_union), .by = c(FLUCCSCODE, FLUCCSDESC))
 
 lu_dif <- st_difference(lulc2023, st_union(sg2024))
 
@@ -99,7 +98,7 @@ lu_dif <- st_difference(lulc2023, st_union(sg2024))
 #         st_drop_geometry() |>
 #         rename(HEM_CODE = HEM_Code) |>
 #         distinct(FLUCCSCODE,SLAMM_CODE,HEM_CODE) |>
-#         mutate(HEM_CODE = (case_when(FLUCCSCODE %in% c(6510, 7210, 9121, 9122) ~ 6510,   #Use a tidal flat code
+#         mutate(HEM_CODE = (case_when(FLUCCSCODE %in% c(6510, 7210, 9121, 9122) ~ 6510,   #Use a single tidal flat code
 #                              TRUE ~ HEM_CODE))) |>
 #         bind_rows(add_data)                                       #Include missing Juncus Marsh code
 
@@ -107,35 +106,39 @@ lu_dif <- st_difference(lulc2023, st_union(sg2024))
 
 load(file = here('data/code_xwalk.Rdata'))
 
+hem_class <- read_csv(file = here('data/hem_class_colors.csv')) |>
+  select(Value, ClassName)
+
+hem_color <- read_csv(file = here('data/hem_class_colors.csv')) |>
+  distinct(ClassName, color_hex) |>
+  select(color_hex)
+
+hem_color2 <- read_csv(file = here('data/hem_class_colors.csv')) |>
+  distinct(Value, color_hex)
+
 lulc23_sg24 <- bind_rows(sg2024, lu_dif)  |>
                mutate(FLUCCSDESC = case_when(FLUCCSCODE == 9121 ~ "Attached Algae",      #Correct for different descriptions in the DISTRICT layers
                                              FLUCCSCODE == 5400 ~ "BAYS AND ESTUARIES",  #Correct for different descriptions in the DISTRICT layers
                                              .default = FLUCCSDESC)) |>
-               group_by(FLUCCSCODE, FLUCCSDESC) |>
-               summarise() |>
-               left_join(codes, by = "FLUCCSCODE")
+               dplyr::summarise(across(geometry, st_union), .by = c(FLUCCSCODE, FLUCCSDESC)) |>
+               left_join(codes, by = "FLUCCSCODE") |>
+               left_join(hem_color2, by = c("HEM_CODE" = "Value"))
 
 save(lulc23_sg24, file = here('data/lulc23_sg24_base.RData'), compress = 'xz')
 
 load(file = here('data/lulc23_sg24_base.RData'))
 
-tbcmp_hem <- rasterize(vect(lulc23_sg24), tbcmp_raster, field = "HEM_CODE", fun = max)
+tbcmp_hem <- rasterize(vect(lulc23_sg24), tbcmp_raster, field = "HEM_CODE", fun = max) |>
+             mask(tbcmp_raster_mask)
 
 tbcmp_hem_filled <- cover(tbcmp_hem, tbcmp_raster_GOM) #Filled null values for Gulf waters with HEM code 5400 (and a small portion of NW Citrus County with no LULC info)
-
-hem_class <- read_csv(file = here('data/hem_class_colors.csv')) |>
-             select(Value, ClassName)
-
-hem_color <- read_csv(file = here('data/hem_class_colors.csv')) |>
-             distinct(ClassName, color_hex) |>
-             select(color_hex)
 
 #hem_colors <- c('#FF7F7F', '#FFBEBE', '#E1E1E1', '#73DFFF', '#BEE8FF', '#FFFF73', '#55FF00', '#737300', '#FFAA00', '#FFD37F', '#267300')
 
 levels(tbcmp_hem_filled) <- hem_class
 #coltab(tbcmp_hem_filled) <- hem_color       #Not working to embed colors in raster
 
-writeRaster(tbcmp_hem_filled, filename = here('data/tbcmp_hem_filled.tif'), overwrite = T, datatype = "INT2U", wopt = list(gdal = c("RAT=YES")))
+writeRaster(tbcmp_hem_filled, filename = here('data/tbcmp_hem_filled.tif'), overwrite = T, datatype = "INT2U", wopt = list(gdal = c("RAT=YES", "COMPRESS=LZW", "PREDICTOR=2")))
 
 #tbcmp_hem_filled <- rast(here('data/tbcmp_hem_filled.tif'))
 
@@ -159,7 +162,7 @@ hem_summary <- freq(tbcmp_hem_filled) |>
                as.data.frame() |>
                group_by(value) |>
                summarise(sum = sum(count)) |>
-               mutate(acres = sum * 0.000988422)
+               mutate(acres = sum * 0.000988422)    #Assumes 2mx2m raster grid cell
 
 county_list <- list()
 
@@ -170,20 +173,20 @@ for (i in 1:nrow(tbcmp_cnt)) {
           extracted <- exact_extract(r_sub, single_poly, fun = NULL, force_df = TRUE,
                                      max_cells_in_memory = 3e+08)
           county_list[[i]] <- data.frame(id = single_poly$county, extracted) |>
-                              unnest() |>
-                              group_by(id, value) |>
-                              summarise(count = sum(coverage_fraction, na.rm = T))
+                              summarise(count = sum(coverage_fraction, na.rm = T), .by = c(id, value))
           rm(extracted)
           rm(r_sub)
           gc()
 }
 
 county_summary <- do.call(rbind, county_list) |>
-                  mutate(acres = count * 0.00617763,   #Use 0.000988422 to Convert from 2x2m grid cell, use 0.00617763 for 5x5m grid cell
+                  mutate(acres = count * 0.000988422,   #Use 0.000988422 to Convert from 2x2m grid cell, use 0.00617763 for 5x5m grid cell
                          land_policy = 'baseline',
                          accretion = 'baseline',
                          slr_scenario = 'baseline',
-                         yr = 2025)
+                         yr = 2025) |>
+                  arrange(id, value)
+
 write.csv(county_summary, here("data/output/tbcmp_baseline_baseline_baseline_2025_county_summary.csv"), row.names = FALSE)
 
 
