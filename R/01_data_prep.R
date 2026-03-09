@@ -138,7 +138,9 @@ tbcmp_hem_filled <- cover(tbcmp_hem, tbcmp_raster_GOM) #Filled null values for G
 levels(tbcmp_hem_filled) <- hem_class
 #coltab(tbcmp_hem_filled) <- hem_color       #Not working to embed colors in raster
 
-writeRaster(tbcmp_hem_filled, filename = here('data/tbcmp_hem_filled.tif'), overwrite = T, datatype = "INT2U", wopt = list(gdal = c("RAT=YES", "COMPRESS=LZW", "PREDICTOR=2")))
+writeRaster(tbcmp_hem_filled, filename = here('data/tbcmp_hem_filled.tif'), filetype = "GTiff",
+            overwrite = T, datatype = "INT2U",
+            wopt = list(gdal = c("RAT=YES", "COMPRESS=LZW", "PREDICTOR=2")))
 
 #tbcmp_hem_filled <- rast(here('data/tbcmp_hem_filled.tif'))
 
