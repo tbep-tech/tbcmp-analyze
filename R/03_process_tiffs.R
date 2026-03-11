@@ -7,8 +7,8 @@ library(stringr)
 library(here)
 
 # Define paths
-geotiff_dir <- here("data/output/low_accretion/")
-output_dir <- here("data/output/")
+geotiff_dir <- here("data/output/raster/")
+output_dir <- here("data/output/raster/")
 
 # Create output directory if it doesn't exist
 if (!dir.exists(output_dir)) {
@@ -85,7 +85,7 @@ for (tiff_file in geotiff_files) {
 
   # Combine all county results
   county_summary <- do.call(rbind, county_list) |>
-    mutate(acres = count * 0.00617763)             #Original HEM outputs are in 5x5m grid cells, use 0.000988422 for 2x2m grid cell outputs
+    mutate(acres = count * 0.000988422)             #Original HEM outputs are in 5x5m grid cells, use 0.000988422 for 2x2m grid cell outputs
 
   # Save results
   output_file <- file.path(output_dir, paste0(tiff_name, "_county_summary.csv"))
