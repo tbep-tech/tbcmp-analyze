@@ -63,7 +63,9 @@ values(tbcmp_raster_mask) <- 0   # Create a raster mask with all 0 values
 save(tbcmp_cnt, file = here('data/tbcmp_cnt.Rdata'), compress = 'xz')
 
 #writeRaster(tbcmp_raster_5m, filename = here('data/tbcmp_base_raster_5m.tif'), overwrite = T, datatype = "INT2U", wopt = list(gdal = c("RAT=YES")))
-writeRaster(tbcmp_raster_10m, filename = here('data/tbcmp_base_raster_10m.tif'), overwrite = T, datatype = "INT2U", wopt = list(gdal = c("RAT=YES")))
+writeRaster(tbcmp_raster_10m, filename = here('data/tbcmp_base_raster_10m.tif'), filetype = "GTiff",
+            overwrite = T, datatype = "INT2U",
+            wopt = list(gdal = c("COMPRESS=LZW", "PREDICTOR=2")))
 
 
 #Download land use and cover classifications, crosswalk to HEM codes, and then rasterize to project area empty rster above
