@@ -141,6 +141,8 @@ HabitatAdjustment_part3 <- function(
 
   if (!is.null(Habitats_Adjusted)) {
     cat(sprintf("  Output path: %s\n", Habitats_Adjusted))
+    hem_class <- read_csv(file = here('data/hem_class_colors.csv')) |>
+                 select(Value, ClassName)
     levels(combined_habitats) <- hem_class
     writeRaster(combined_habitats, Habitats_Adjusted, overwrite = TRUE, datatype = "INT2U", wopt = list(gdal = c("RAT=YES", "COMPRESS=LZW", "PREDICTOR=2")))
     cat("  Successfully saved!\n")
