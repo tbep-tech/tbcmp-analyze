@@ -11,7 +11,7 @@ format:
     theme: cosmo
     code-tools: 
       source: https://github.com/tbep-tech/tbcmp-analyze/blob/main/docs/hem-workflow.qmd
-    css: styles.css
+    css: tbcmp-brand.css
     embed-resources: true
     smooth-scroll: true
 execute:

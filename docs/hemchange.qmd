@@ -7,7 +7,7 @@ format:
     theme: cosmo
     code-tools: 
       source: https://github.com/tbep-tech/tbcmp-analyze/blob/main/docs/hemchange.qmd
-    css: styles.css
+    css: tbcmp-brand.css
 toc: true
 lightbox: true
 execute:
