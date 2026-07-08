@@ -34,7 +34,7 @@ library(sabre)
 # Load raster datasets
 # Replace these paths with your actual data
 raster_time1 <- rast("./data/tbcmp_hem_filled.tif")               # Baseline time period (2025)
-raster_time2 <- rast("./data/output/raster/tbcmp_PD_LA_IntHi_2080.tif")  # Later time period (2050, 2080, 2100)
+raster_time2 <- rast("./data/output/raster/tbcmp_PD_LA_IntHigh_2080.tif")  # Later time period (2050, 2080, 2100)
 scaled_raster <- rast("./data/tbcmp_base_raster_10m.tif")         # A base raster to rescale the above to a 10m grid size
 hem_class <- read_csv(file = here('data/hem_class_colors.csv')) |>
   select(Value, ClassName)
@@ -76,7 +76,7 @@ if (!same.crs(counties, raster_time2)) {
 # SECTION 2: Calculate Change
 ################################################################################
 
-#Calculate a confusion matrix to compare the pixel changes between the two raster
+#Calculate a confusion matrix to compare the pixel changes between the two rasters
 cm = table(values(raster_time1), values(raster_time2))
 
 df <- data.frame(cm) |>
@@ -164,13 +164,13 @@ color_ramp = colorRampPalette(c("green","yellow","red"))
 
 plot(lc_sabre$map1[[2]], col = color_ramp(20)) #Depiction of regions most inhomogeneous (Rih) from current conditions (2025)
 
-writeRaster(lc_sabre$map1[[2]], filename = "./data/output/hot_spot/tbcmp_exist_vuln_2025v2080PDLAIntHi.tif",
+writeRaster(lc_sabre$map1[[2]], filename = "./data/output/hot_spot/archive/tbcmp_exist_vuln_2025v2080AMHAIntHi.tif",
             filetype = "GTiff", overwrite = T, datatype = "FLT4S",
             wopt = list(gdal = c("COMPRESS=LZW", "PREDICTOR=2")))
 
 plot(lc_sabre$map2[[2]], col = color_ramp(20)) #Depiction of regions most inhomogeneous (Rih) from later condition (2050, 2080, 2100, etc.)
 
-writeRaster(lc_sabre$map2[[2]], filename = "./data/output/hot_spot/tbcmp_future_diff_2080PDLAIntHiv2025.tif",
+writeRaster(lc_sabre$map2[[2]], filename = "./data/output/hot_spot/archive/tbcmp_future_diff_2080AMHAIntHiv2025.tif",
             filetype = "GTiff", overwrite = T, datatype = "FLT4S",
             wopt = list(gdal = c("COMPRESS=LZW", "PREDICTOR=2")))
 
