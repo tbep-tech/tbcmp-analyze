@@ -1,0 +1,26 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Description>map1_exist_vuln_mean</Description>
+    <Histograms>
+      <HistItem>
+        <HistMin>8.586062904214486e-05</HistMin>
+        <HistMax>0.5726681351661682</HistMax>
+        <BucketCount>256</BucketCount>
+        <IncludeOutOfRange>1</IncludeOutOfRange>
+        <Approximate>0</Approximate>
+        <HistCounts>150353009|0|0|0|0|0|0|22595956|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|34021432|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|4232057|0|0|0|0|0|0|0|0|23205074|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|25462677|0|0|0|0|0|0|0|0|0|0|0|0|11420|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|891756|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|2234662|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|49605|0|0|0|2057384</HistCounts>
+      </HistItem>
+    </Histograms>
+    <Metadata>
+      <MDI key="STATISTICS_COUNT">265115032.000000</MDI>
+      <MDI key="STATISTICS_COVARIANCES">0.01471624834103656</MDI>
+      <MDI key="STATISTICS_MAXIMUM">0.57266813516617</MDI>
+      <MDI key="STATISTICS_MEAN">0.071300290146967</MDI>
+      <MDI key="STATISTICS_MEDIAN">0.000086</MDI>
+      <MDI key="STATISTICS_MINIMUM">8.5860629042145e-05</MDI>
+      <MDI key="STATISTICS_SKIPFACTORX">1</MDI>
+      <MDI key="STATISTICS_SKIPFACTORY">1</MDI>
+      <MDI key="STATISTICS_STDDEV">0.12131054505292</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>
