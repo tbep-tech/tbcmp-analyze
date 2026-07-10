@@ -8,6 +8,8 @@ This repository contains GIS base files and analyses used to understand habitat 
 
 Additionally, the repository contains R code converted from ArcGIS Python/ModelBuilder scripts for modeling coastal habitat changes under sea level rise scenarios. The model (based on the SLAMM) predicts how different habitat types will transition as sea levels rise, accounting for differing marsh accretion rates, tidal datum adjustments and SLR scenarios, and softly developed land use protection policies.
 
+View products and methods descriptions: [https://tbep-tech.github.io/tbcmp-analyze/hem-workflow.html](https://tbep-tech.github.io/tbcmp-analyze/hem-workflow.html)
+
 ---
 
 ## Components
