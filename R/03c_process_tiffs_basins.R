@@ -4,12 +4,26 @@
 # Summarize HEM GeoTIFF outputs by SWFWMD/FDEP drainage basin.
 #
 # Companion to:
-#   03_process_tiffs.R        (summaries by county)
-#   03b_process_tiffs_huc12.R (summaries by NHDPlus HUC12)
+#   03_process_tiffs.R                (summaries by county)
+#   03b_process_tiffs_huc12.R         (summaries by NHDPlus HUC12)
+#   04b_HEM_Change_Summary_by_Basin.R (consumes the CSVs written here)
 #
 # Difference from 03b: basins are read from a local shapefile
 # (./data-raw/swfwmd/Drainage_Basin_Boundaries.shp) rather than pulled from
 # NHDPlus via nhdplusTools::get_huc(). No network call is required.
+#
+# REVISION - dissolve now includes HUC8
+# -------------------------------------
+# The previous version dissolved on EXTHUC + BASIN + FEATURE only. EXTHUC is
+# unique only WITHIN a HUC8, so that grouping merged basins across unrelated
+# watersheds: EXTHUC 99990000 / "DIRECT RUNOFF TO BAY" occurs 51 times across
+# five HUC8s, and 99999900 / "DIRECT RUNOFF TO GULF" 23 times, all collapsing
+# into single multipart units. Grouping on HUC + EXTHUC + BASIN + FEATURE
+# yields 1,069 units from 1,166 records; the old grouping gave 1,061.
+#
+# basin_id values have changed as a result (now HUC8_EXTHUC_BASIN_NAME). Any
+# CSVs written by the earlier version must be regenerated - they are not
+# joinable with output from this version.
 #
 # Tampa Bay Estuary Program / Tampa Bay Coastal Master Plan
 # ---------------------------------------------------------------------------
@@ -27,6 +41,11 @@ library(here)
 geotiff_dir <- here("data/output/raster/")
 output_dir  <- here("data/output/basin/")
 basin_shp   <- here("data-raw/swfwmd/Drainage_Basin_Boundaries.shp")
+
+# Acres per raster cell. 0.000988422 = 4 m^2 (2x2m HEM outputs).
+# Use 0.00617764 for 5x5m outputs, 0.02471054 for 10x10m.
+# Must match the value used in 04b_HEM_Change_Summary_by_Basin.R.
+cell_acres <- 0.000988422
 
 # Create output directory if it doesn't exist
 if (!dir.exists(output_dir)) {
@@ -57,39 +76,66 @@ study_bbox <- st_bbox(base_raster) |>
 
 cat("Reading drainage basins from:", basin_shp, "\n")
 
+# Source layer is NAD83(HARN) / StatePlane Florida West ftUS; st_transform
+# handles the conversion to the project CRS.
 tbcmp_basins <- st_read(basin_shp, quiet = TRUE) |>
   st_transform(prj) |>
   st_make_valid()
 
+cat("  Read", nrow(tbcmp_basins), "polygon records\n")
+
 # --- Resolve attribute names defensively -----------------------------------
 # Shapefile export can truncate/case-shift field names, so match rather than
-# assume. Expected SWFWMD/FDEP schema: BASIN, HUC, EXTHUC, FEATURE, SQ_MILES.
-nms       <- names(tbcmp_basins)
-name_fld  <- nms[toupper(nms) %in% c("BASIN", "BASIN_NAME", "NAME")][1]
-huc_fld   <- nms[toupper(nms) %in% c("EXTHUC", "HUC", "HUC8")][1]
-feat_fld  <- nms[toupper(nms) %in% c("FEATURE", "FEAT_TYPE")][1]
+# assume. Expected SWFWMD/FDEP schema:
+#   OBJECTID, HUC, EXTHUC, BASIN, FEATURE, SQ_MILES, DATESTAMP
+nms        <- names(tbcmp_basins)
+name_fld   <- nms[toupper(nms) %in% c("BASIN", "BASIN_NAME", "NAME")][1]
+huc8_fld   <- nms[toupper(nms) %in% c("HUC", "HUC8")][1]
+exthuc_fld <- nms[toupper(nms) %in% c("EXTHUC", "EXT_HUC")][1]
+feat_fld   <- nms[toupper(nms) %in% c("FEATURE", "FEAT_TYPE")][1]
 
 if (is.na(name_fld)) {
   stop("Could not find a basin name field. Fields present: ",
        paste(nms, collapse = ", "))
 }
+if (is.na(huc8_fld)) {
+  warning("No HUC8 field found. Basins sharing an EXTHUC across watersheds ",
+          "will be merged. Fields present: ", paste(nms, collapse = ", "))
+}
 
 tbcmp_basins <- tbcmp_basins |>
   mutate(
     basin_name = as.character(.data[[name_fld]]),
-    basin_huc  = if (!is.na(huc_fld))  as.character(.data[[huc_fld]])  else NA_character_,
-    basin_feat = if (!is.na(feat_fld)) as.character(.data[[feat_fld]]) else NA_character_
+    basin_huc8 = if (!is.na(huc8_fld))   as.character(.data[[huc8_fld]])   else NA_character_,
+    basin_huc  = if (!is.na(exthuc_fld)) as.character(.data[[exthuc_fld]]) else NA_character_,
+    basin_feat = if (!is.na(feat_fld))   as.character(.data[[feat_fld]])   else NA_character_
   )
 
 # --- Dissolve multipart records so each basin appears once ------------------
 # Mirrors the county dissolve in 01_data_prep.R. Prevents duplicate ids in the
-# output when a single basin is stored as several polygon records.
+# output when a single basin is stored as several polygon records. HUC8 is
+# included in the grouping because EXTHUC is only unique within a HUC8 - see
+# the revision note in the header.
 tbcmp_basins <- tbcmp_basins |>
-  group_by(basin_name, basin_huc, basin_feat) |>
+  group_by(basin_huc8, basin_huc, basin_name, basin_feat) |>
   summarise(.groups = "drop") |>
   st_make_valid() |>
-  mutate(basin_id = paste0(coalesce(basin_huc, "NA"), "_",
-                           str_replace_all(basin_name, "\\s+", "_")))
+  mutate(
+    basin_id = paste0(
+      coalesce(basin_huc8, "NA"), "_",
+      coalesce(basin_huc, "NA"), "_",
+      str_replace_all(basin_name, "\\s+", "_")
+    )
+  )
+
+cat("  Dissolved to", nrow(tbcmp_basins), "unique basin units\n")
+
+# Sanity check: basin_id must be unique after the dissolve
+if (any(duplicated(tbcmp_basins$basin_id))) {
+  dupes <- tbcmp_basins$basin_id[duplicated(tbcmp_basins$basin_id)]
+  stop("Duplicate basin_id values after dissolve: ",
+       paste(unique(dupes), collapse = ", "))
+}
 
 # Keep only basins that intersect the project area
 tbcmp_basins <- st_filter(tbcmp_basins, study_bbox)
@@ -99,6 +145,9 @@ cat("Found", nrow(tbcmp_basins), "drainage basins in study area\n\n")
 if (nrow(tbcmp_basins) == 0) {
   stop("No drainage basins intersect the project area. Check the shapefile CRS.")
 }
+
+# Cache the dissolved layer so 04b and any mapping scripts use identical ids
+save(tbcmp_basins, file = here("data/tbcmp_basins.Rdata"), compress = "xz")
 
 rm(base_raster)
 gc()
@@ -163,6 +212,7 @@ for (tiff_file in geotiff_files) {
                 .groups = "drop") |>
       mutate(
         basin_name   = single_poly$basin_name,
+        basin_huc8   = single_poly$basin_huc8,
         basin_huc    = single_poly$basin_huc,
         basin_feat   = single_poly$basin_feat,
         filename     = tiff_name,
@@ -179,7 +229,7 @@ for (tiff_file in geotiff_files) {
 
   # Combine all basin results
   basin_summary <- do.call(rbind, basin_list) |>
-    mutate(acres = count * 0.000988422)   # 2x2m cells; adjust for other resolutions
+    mutate(acres = count * cell_acres)
 
   # Save results
   output_file <- file.path(output_dir, paste0(tiff_name, "_basin_summary.csv"))
