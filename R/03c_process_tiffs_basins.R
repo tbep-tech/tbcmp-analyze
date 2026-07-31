@@ -56,6 +56,25 @@
 # against basins of thousands of acres that is a rounding error, but "exact"
 # is there if the county and HUC12 summaries need to be matched exactly.
 #
+# REVISION 4 - CRS bug in the crosstab path
+# -----------------------------------------
+# Revision 3 reported "No overlapping cells found" for every tiff. Cause:
+# tbcmp_basins is transformed once to the CRS of tbcmp_base_raster_10m.tif
+# (EPSG:3087), and the exact path re-projected per raster, but the crosstab
+# path passed those 3087 basins straight into rasterize() against the HEM
+# tiff. terra::rasterize does NOT reproject - a CRS mismatch yields an all-NA
+# zone raster rather than an error, so crosstab returned zero rows and the
+# script logged an empty result instead of failing.
+#
+# Basins are now aligned to each raster's CRS before rasterizing, extents are
+# checked before the pass, the zone raster is sampled to confirm it carries
+# values, and zero counts raise an error instead of being skipped. Untagged
+# rasters are handled explicitly rather than defaulting to "no overlap".
+#
+# Delete data/zones/ before rerunning - any zone raster cached by revision 3
+# is all NA. The script now detects and rebuilds these, but removing them is
+# faster than sampling each one.
+#
 # Tampa Bay Estuary Program / Tampa Bay Coastal Master Plan
 # ---------------------------------------------------------------------------
 
@@ -86,6 +105,15 @@ tile_size_m <- 5000
 # Skip tiffs whose CSV already exists. Leave TRUE so a crash does not discard
 # completed work - rerun and it picks up where it stopped.
 resume <- TRUE
+
+# Ignore any cached zone raster and rebuild. Set TRUE once after upgrading
+# from a version that cached an all-NA zone raster (see Revision 4).
+force_zone_rebuild <- FALSE
+
+# Some HEM/SLAMM exports ship without a CRS tag. If TRUE, an untagged raster
+# is assumed to be on the same CRS as tbcmp_base_raster_10m.tif rather than
+# failing. Set FALSE to make an untagged raster a hard error.
+assume_crs_if_missing <- TRUE
 
 # Normalize name variants ("DIR RUNOFF" -> "DIRECT RUNOFF", squish whitespace)
 normalize_basin_names <- TRUE
@@ -287,18 +315,81 @@ acres_per_cell <- function(r) {
   prod(rr) * 0.000247105381   # m^2 -> acres
 }
 
+# Put the basins on the raster's CRS. terra::rasterize does NOT reproject: a
+# CRS mismatch yields an all-NA zone raster instead of an error, which is what
+# produced "No overlapping cells found" on every tiff.
+align_basins <- function(basins, r) {
+  if (st_crs(basins) == st_crs(crs(r))) return(basins)
+  cat("  Reprojecting basins:", crs_label(st_crs(basins)$wkt),
+      "->", crs_label(crs(r)), "\n")
+  st_transform(basins, crs(r))
+}
+
+crs_label <- function(x) {
+  a <- try(st_crs(x), silent = TRUE)
+  if (inherits(a, "try-error") || is.na(a$input)) return("undefined")
+  if (!is.na(a$epsg)) paste0("EPSG:", a$epsg) else substr(a$input, 1, 40)
+}
+
+# Confirm the aligned basins actually fall on the raster before rasterizing.
+# Catches both a genuine footprint mismatch and a CRS that was reprojected to
+# the wrong thing.
+check_overlap <- function(basins, r, label = "") {
+  bb <- st_bbox(basins)
+  re <- as.vector(ext(r))
+
+  overlaps <- bb[["xmin"]] < re[2] && bb[["xmax"]] > re[1] &&
+              bb[["ymin"]] < re[4] && bb[["ymax"]] > re[3]
+
+  if (!overlaps) {
+    cat("\n  EXTENT MISMATCH", label, "\n")
+    cat("    raster CRS   :", crs_label(crs(r)), "\n")
+    cat("    basins CRS   :", crs_label(st_crs(basins)$wkt), "\n")
+    cat("    raster extent:", paste(round(re, 1), collapse = ", "), "\n")
+    cat("    basins extent:", paste(round(as.vector(bb), 1), collapse = ", "), "\n")
+  }
+
+  overlaps
+}
+
+# Cheap check that a zone raster actually carries values. A full pass over a
+# multi-billion-cell grid is not worth it; a stratified sample is enough to
+# distinguish "all NA" from "populated".
+zone_has_values <- function(z, n = 20000) {
+  s <- try(spatSample(z, size = n, method = "regular", na.rm = TRUE,
+                      values = TRUE, warn = FALSE), silent = TRUE)
+  if (inherits(s, "try-error")) return(NA)
+  nrow(s) > 0
+}
+
 # Build (or reuse) the zone raster aligned to a given HEM raster
 get_zone_raster <- function(r, basins) {
+
+  # Reproject FIRST - everything downstream depends on this
+  basins <- align_basins(basins, r)
+
+  if (!check_overlap(basins, r, "(basins vs raster)")) {
+    stop("Basins do not overlap ", basename(sources(r)), ". ",
+         "Check that the HEM outputs and tbcmp_base_raster_10m.tif are on ",
+         "the same CRS, or set assume_crs_if_missing if the tiffs are untagged.")
+  }
+
   sig      <- grid_signature(r)
   zone_tif <- file.path(zone_dir, paste0("zones_", sig, ".tif"))
 
-  if (file.exists(zone_tif)) {
+  if (file.exists(zone_tif) && !force_zone_rebuild) {
     z <- rast(zone_tif)
     if (compareGeom(z, r, stopOnError = FALSE)) {
-      cat("  Reusing cached zone raster\n")
-      return(z)
+      ok <- zone_has_values(z)
+      if (isTRUE(ok)) {
+        cat("  Reusing cached zone raster\n")
+        return(z)
+      }
+      cat("  Cached zone raster is empty (built before the CRS fix); rebuilding\n")
+    } else {
+      cat("  Cached zone raster does not align; rebuilding\n")
     }
-    cat("  Cached zone raster does not align; rebuilding\n")
+    rm(z)
   }
 
   cat("  Rasterizing", nrow(basins), "basins to the raster grid (one time)\n")
@@ -311,6 +402,12 @@ get_zone_raster <- function(r, basins) {
     datatype  = "INT2U",
     gdal      = c("COMPRESS=LZW", "TILED=YES", "BIGTIFF=YES")
   )
+
+  # Fail here rather than silently writing empty CSVs for every scenario
+  if (isFALSE(zone_has_values(z))) {
+    stop("Zone raster came back empty after rasterize despite overlapping ",
+         "extents. Inspect ", zone_tif, " in GIS before rerunning.")
+  }
 
   z
 }
@@ -418,10 +515,24 @@ for (tiff_file in geotiff_files) {
   yr           <- if (length(parts) > 4) parts[5] else NA
 
   tbcmp_raster <- rast(tiff_file)
-  cell_acres   <- acres_per_cell(tbcmp_raster)
+
+  # An untagged raster cannot be reprojected against, and silently defaults to
+  # "no overlap". Tag it from the base raster or stop, per configuration.
+  if (is.na(crs(tbcmp_raster)) || crs(tbcmp_raster) == "") {
+    if (assume_crs_if_missing) {
+      cat("  Raster has no CRS; assuming", crs_label(prj), "from base raster\n")
+      crs(tbcmp_raster) <- prj
+    } else {
+      stop(tiff_name, " has no CRS defined. Tag it, or set ",
+           "assume_crs_if_missing <- TRUE.")
+    }
+  }
+
+  cell_acres <- acres_per_cell(tbcmp_raster)
 
   cat("  Grid:", paste(dim(tbcmp_raster)[1:2], collapse = " x "),
       "| res:", paste(res(tbcmp_raster), collapse = "x"),
+      "| CRS:", crs_label(crs(tbcmp_raster)),
       "| acres/cell:", signif(cell_acres, 6), "\n")
 
   if (method == "crosstab") {
@@ -434,20 +545,36 @@ for (tiff_file in geotiff_files) {
 
   } else if (method == "exact") {
 
-    basin_sub <- st_transform(tbcmp_basins, crs(tbcmp_raster))
-    counts    <- counts_exact(tbcmp_raster, basin_sub)
+    basin_sub <- align_basins(tbcmp_basins, tbcmp_raster)
+
+    if (!check_overlap(basin_sub, tbcmp_raster, "(basins vs raster)")) {
+      stop("Basins do not overlap ", tiff_name, ".")
+    }
+
+    counts <- counts_exact(tbcmp_raster, basin_sub)
     rm(basin_sub)
 
   } else {
     stop("Unknown method: ", method, ". Use 'crosstab' or 'exact'.")
   }
 
+  # Zero rows here is a configuration problem, not a legitimate empty result -
+  # the overlap check above already passed. Stop rather than writing an empty
+  # CSV that resume would then treat as complete on the next run.
   if (nrow(counts) == 0) {
-    cat("  No overlapping cells found, skipping.\n\n")
-    rm(tbcmp_raster, counts)
-    tmpFiles(remove = TRUE)
-    invisible(gc())
-    next
+    cat("\n  DIAGNOSTIC\n")
+    cat("    raster CRS   :", crs_label(crs(tbcmp_raster)), "\n")
+    cat("    basins CRS   :", crs_label(st_crs(tbcmp_basins)$wkt), "\n")
+    cat("    raster extent:", paste(round(as.vector(ext(tbcmp_raster)), 1),
+                                    collapse = ", "), "\n")
+    cat("    basins extent:", paste(round(as.vector(st_bbox(tbcmp_basins)), 1),
+                                    collapse = ", "), "\n")
+    if (method == "crosstab") {
+      cat("    zone raster populated:", zone_has_values(zone_r), "\n")
+      cat("    zone raster file     :", sources(zone_r), "\n")
+    }
+    stop("No overlapping cells for ", tiff_name,
+         " despite passing the extent check. See diagnostic above.")
   }
 
   basin_summary <- counts |>
