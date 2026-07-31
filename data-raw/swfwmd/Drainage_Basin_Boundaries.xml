@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata>
+    <idinfo>
+        <citation>
+            <citeinfo>
+                <origin/>
+                <pubdate>20040101</pubdate>
+                <title>Drainage Basin Boundaries</title>
+                <geoform>vector digital data</geoform>
+                <pubinfo>
+                    <pubplace/>
+                    <publish>Florida Department of Environmental Protection</publish>
+                </pubinfo>
+                <othercit>Additional Information: (850) 488-0300</othercit>
+                <onlink>https://www25.swfwmd.state.fl.us/arcgis12/rest/services/OpenData/Hydrography/MapServer/10</onlink>
+                <onlink>https://www31.swfwmd.state.fl.us/metadata/DRAINAGEBASINS.xml</onlink>
+            </citeinfo>
+        </citation>
+        <descript>
+            <abstract>Drainage basin boundaries interpreted and digitized from the USGS 1:24,000 quadrangles.  The basin boundaries are categorized according to the USGS Hydrologic Unit Classification (HUC) coding system. This service is for the Open Data Download application for the Southwest Florida Water Management District.</abstract>
+            <purpose>Drainage basin boundaries. This service is for the Open Data Download application for the Southwest Florida Water Management District.</purpose>
+        </descript>
+        <timeperd>
+            <timeinfo>
+                <sngdate>
+                    <caldate>20040115</caldate>
+                </sngdate>
+            </timeinfo>
+            <current>publication date</current>
+        </timeperd>
+        <status>
+            <progress>Complete</progress>
+            <update>None planned</update>
+        </status>
+        <spdom>
+            <bounding>
+                <westbc>-83.11718</westbc>
+                <eastbc>-80.825995</eastbc>
+                <northbc>29.819493</northbc>
+                <southbc>26.466456</southbc>
+            </bounding>
+        </spdom>
+        <keywords>
+            <theme>
+                <themekt>None</themekt>
+                <themekey>Hydrologic Unit Code</themekey>
+                <themekey>Watersheds</themekey>
+                <themekey>Drainage Basins</themekey>
+                <themekey>HUC</themekey>
+            </theme>
+            <place>
+                <placekt>None</placekt>
+                <placekey>Southwest Florida Water Management District</placekey>
+            </place>
+        </keywords>
+        <accconst>None</accconst>
+        <useconst>This
+REST service is only available from 6 A.M. to 10 P.M. daily. The data are being
+provided on an 'as is' basis. The District specifically disclaims any warranty,
+either expressed or implied, including, but not limited to, the implied
+warranties or merchantability and fitness for a particular use. The entire risk
+as to quality and performance is with the user. In no event will the District
+or its staff be liable for any direct, indirect, incidental, special,
+consequential, or other damages, including loss of profit, arising out of the
+use of these data even if the District has been advised of the possibility of such
+damages. All data are intended for resource management use and have not been
+collected or certified by a Florida-registered Surveyor and Mapper.</useconst>
+        <ptcontac>
+            <cntinfo>
+                <cntorgp>
+                    <cntorg>Southwest Florida Water Management District</cntorg>
+                    <cntper>Mapping and GIS Section</cntper>
+                </cntorgp>
+                <cntaddr>
+                    <addrtype>mailing and physical</addrtype>
+                    <address>2379 Broad Street (U.S. 41 South)</address>
+                    <city>Brooksville</city>
+                    <state>FL</state>
+                    <postal>34604-6899</postal>
+                </cntaddr>
+                <cntvoice>(352) 796-7211</cntvoice>
+                <cntfax>(352) 540-6018</cntfax>
+                <hours>8:00 a.m. to 5:00 p.m.</hours>
+            </cntinfo>
+        </ptcontac>
+        <datacred>Southwest Florida Water Management District</datacred>
+        <native>ESRI ArcCatalog 9.3.1.4000</native>
+    </idinfo>
+    <dataqual>
+        <attracc>
+            <attraccr>It is estimated that the attribute accuracy is approaching 100%. This was validated by an on screen visual inspection of the drainage basins coverage as of April 2000. Additional inspection was performed when the updated data were downloaded from the FDEP in January 2004. The FDEP incorporates quality control checks in the production of their data layers. See the attached metadata report for further information on the quality control methods used in the production of the data.</attraccr>
+        </attracc>
+        <logic>Validated by using an on-screen visual inspection of the data at a scale of 1:12,000. The final product was checked against the source material. The Mapping and GIS section of the Southwest Florida Water Management District corrected any errors found.</logic>
+        <complete>There are no significant omissions.</complete>
+        <posacc>
+            <horizpa>
+                <horizpar>Validated using on-screen visual inspection of the data at a scale of 1:12,000 and estimated to meet the National Map Accuracy standards, (approximately 13 meters) as of April 2000. The FDEP incorporates quality control checks in the production of their data layers. See the attached metadata report for further information on the quality control methods used in the production of the data.</horizpar>
+            </horizpa>
+        </posacc>
+        <lineage>
+            <srcinfo>
+                <srccite>
+                    <citeinfo>
+                        <pubdate>19970101</pubdate>
+                        <title>drainage_basins_1997_areas shapefile</title>
+                    </citeinfo>
+                </srccite>
+                <typesrc>None</typesrc>
+                <srctime>
+                    <timeinfo>
+                        <sngdate>
+                            <caldate>19970101</caldate>
+                        </sngdate>
+                    </timeinfo>
+                    <srccurr>publication date</srccurr>
+                </srctime>
+                <srccitea>drainage_basins_1997_areas shapefile</srccitea>
+                <srccontr>Florida Department of Environmental Protection</srccontr>
+            </srcinfo>
+            <procstep>
+                <procdesc>The Southwest Florida Water Management District received a state-wide Drainage Basin shapefile from DEP. Using ArcMap 8.3, the drainage basins comprising the primary watersheds which fell within or were intersected by the boundary of SWFWMD were selected from the state-wide drainage basin shapefile.</procdesc>
+                <procdate>20040115</procdate>
+                <proccont>
+                    <cntinfo>
+                        <cntorgp>
+                            <cntorg>Southwest Florida Water Management District</cntorg>
+                            <cntper>Mapping and GIS Section</cntper>
+                        </cntorgp>
+                        <cntaddr>
+                            <addrtype>mailing and physical</addrtype>
+                            <address>2379 Broad Street (U.S. 41 South)</address>
+                            <city>Brooksville</city>
+                            <state>FL</state>
+                            <postal>34604-6899</postal>
+                        </cntaddr>
+                        <cntvoice>(352) 796-7211</cntvoice>
+                        <cntfax>(352) 540-6018</cntfax>
+                        <hours>8:00 a.m. to 5:00 p.m.</hours>
+                    </cntinfo>
+                </proccont>
+            </procstep>
+            <procstep>
+                <procdesc>An enterprise geodatabase was designed and implemented. Coverages were converted into feature classes using ArcCatalog 8.3. The feature classes were created new in a feature dataset, with column names, shape type, grid size, and projection information defined during creation. An X/Y Domain and Precision were set at MinX: -700,000; MinY: 2,000,000; Precision: 1000. Z-Values were set at MinZ: -20; Precision: 1000. The Grid Tile Size is 500,000. Data was then loaded into the feature classes from the coverages using the 'Load Data' tool in ArcCatalog 8.3.</procdesc>
+                <procdate>20040223</procdate>
+                <proccont>
+                    <cntinfo>
+                        <cntorgp>
+                            <cntorg>Southwest Florida Water Management District</cntorg>
+                            <cntper>Mapping and GIS Section</cntper>
+                        </cntorgp>
+                        <cntaddr>
+                            <addrtype>mailing and physical</addrtype>
+                            <address>2379 Broad Street (U.S. 41 South)</address>
+                            <city>Brooksville</city>
+                            <state>FL</state>
+                            <postal>34604-6899</postal>
+                        </cntaddr>
+                        <cntvoice>(352) 796-7211</cntvoice>
+                        <cntfax>(352) 540-6018</cntfax>
+                        <hours>8:00 a.m. to 5:00 p.m.</hours>
+                    </cntinfo>
+                </proccont>
+            </procstep>
+            <procstep>
+                <procdesc>In October 2009, the District's enterprise SDE vector data layers were re-projected from UTM to State Plane Feet. At this same time the data layers were loaded into SDE using ESRI's Spatial Data Type. The new data type allows users to use SQL queries for spatial inquiries.</procdesc>
+                <procdate>20091002</procdate>
+                <proccont>
+                    <cntinfo>
+                        <cntorgp>
+                            <cntorg>Southwest Florida Water Management District</cntorg>
+                            <cntper>Mapping and GIS Section</cntper>
+                        </cntorgp>
+                        <cntaddr>
+                            <addrtype>mailing and physical</addrtype>
+                            <address>2379 Broad Street (U.S. 41 South)</address>
+                            <city>Brooksville</city>
+                            <state>FL</state>
+                            <postal>34604-6899</postal>
+                        </cntaddr>
+                        <cntvoice>(352) 796-7211</cntvoice>
+                    </cntinfo>
+                </proccont>
+            </procstep>
+        </lineage>
+    </dataqual>
+    <spdoinfo>
+        <direct>Vector</direct>
+        <ptvctinf>
+            <sdtsterm>
+                <ptvctcnt>1166</ptvctcnt>
+            </sdtsterm>
+        </ptvctinf>
+    </spdoinfo>
+    <eainfo>
+        <detailed>
+            <enttyp>
+                <enttypl>SDECREATOR.DRAINAGEBASINS</enttypl>
+                <enttypd>SDE Geodatabase feature class</enttypd>
+                <enttypds>ESRI Geodatabase</enttypds>
+            </enttyp>
+            <attr>
+                <attrlabl>EXTHUC</attrlabl>
+                <attrdef>The extended hydrologic unit code is an eight digit code assigned by USGS to each watershed.</attrdef>
+                <attrdefs>FDEP</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>extended huc code</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>HUC</attrlabl>
+                <attrdef>USGS hydrologic unit code.</attrdef>
+                <attrdefs>FDEP</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>huc code</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>SHAPE.AREA</attrlabl>
+                <attrdef>Area of feature in internal units squared.</attrdef>
+                <attrdefs>ESRI</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>Positive real numbers that are automatically generated.</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>SHAPE.LEN</attrlabl>
+                <attrdef>Length of feature in internal units.</attrdef>
+                <attrdefs>ESRI</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>Positive real numbers that are automatically generated.</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>DATESTAMP</attrlabl>
+                <attrdef>The date the feature was last edited or entered into the map libraries by SWFWMD staff.</attrdef>
+                <attrdefs>User Defined</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>date</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>SHAPE</attrlabl>
+                <attrdef>Feature geometry.</attrdef>
+                <attrdefs>ESRI</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>Coordinates defining the features.</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>BASIN</attrlabl>
+                <attrdef>Name (e.g. Sixmile Creek, unnamed canal, Crescent Lake).</attrdef>
+                <attrdefs>FDEP</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>text</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>OBJECTID</attrlabl>
+                <attrdef>Internal feature number.</attrdef>
+                <attrdefs>ESRI</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>Sequential unique whole numbers that are automatically generated.</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>SQ_MILES</attrlabl>
+                <attrdef>The conversion of the AREA value to square miles.</attrdef>
+                <attrdefs>FDEP</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>number</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>FEATURE</attrlabl>
+                <attrdef>Hydrologic feature type (eg. STREAM, CANAL, BAY, etc.).</attrdef>
+                <attrdefs>FDEP</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>text</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+        </detailed>
+    </eainfo>
+    <distinfo>
+        <distrib>
+            <cntinfo>
+                <cntorgp>
+                    <cntorg>Southwest Florida Water Management District</cntorg>
+                    <cntper>Mapping and GIS Section</cntper>
+                </cntorgp>
+                <cntaddr>
+                    <addrtype>mailing and physical</addrtype>
+                    <address>2379 Broad Street (U.S. 41 South)</address>
+                    <city>Brooksville</city>
+                    <state>FL</state>
+                    <postal>34604-6899</postal>
+                </cntaddr>
+                <cntvoice>(352) 796-7211</cntvoice>
+                <cntfax>(352) 540-6018</cntfax>
+                <hours>8:00 a.m. to 5:00 p.m.</hours>
+            </cntinfo>
+        </distrib>
+        <resdesc>The data are being provided on an 'as is' basis. The District specifically disclaims any warranty, expressed or implied, including, but not limited to, the implied warranties or merchantability and fitness for a particular use. The entire risk as to quality and performance is with the user. In no event will the District or its staff be liable for any direct, indirect, incidental, special, consequential, or other damages, including loss of profit, arising out of the use of these data even if the District has been advised of the possibility of such damages. All data are intended for resource management use.</resdesc>
+        <distliab>See access and use constraints information.</distliab>
+    </distinfo>
+    <metainfo>
+        <metd>20110825</metd>
+        <metc>
+            <cntinfo>
+                <cntorgp>
+                    <cntorg>Southwest Florida Water Management District</cntorg>
+                    <cntper>Mapping and GIS Section</cntper>
+                </cntorgp>
+                <cntaddr>
+                    <addrtype>mailing and physical</addrtype>
+                    <address>2379 Broad Street (U.S. 41 South)</address>
+                    <city>Brooksville</city>
+                    <state>FL</state>
+                    <postal>34604-6899</postal>
+                    <country>US</country>
+                </cntaddr>
+                <cntvoice>(352) 796-7211</cntvoice>
+                <cntfax>(352) 540-6018</cntfax>
+                <hours>8:00 a.m. to 5:00 p.m.</hours>
+            </cntinfo>
+        </metc>
+        <metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+        <metstdv>FGDC-STD-001-1998</metstdv>
+        <mettc>local time</mettc>
+    </metainfo>
+</metadata>
