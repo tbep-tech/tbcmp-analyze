@@ -375,6 +375,43 @@ all_data <- combined |>
             std_acres  = sd(sum_acres),
             .by = c(unit, domain, land_policy, hem_category, yr))
 
+# --- Domain-level ensemble --------------------------------------------------
+# Aggregate to domain FIRST, then take mean()/sd() over the accretion x SLR
+# ensemble. Pooling per-unit SDs (sqrt(sum(sd^2))) would assume units vary
+# independently, which they do not - every unit in a domain sees the same SLR
+# curve, so a high-SLR member pushes them all the same direction at once.
+# Summing per-member totals and taking sd() over the resulting vector of
+# ensemble totals gives the spread of the quantity actually being reported.
+domain_ensemble <- combined |>
+  summarize(sum_acres = sum(acres),
+            .by = c(domain, land_policy, accretion, slr_scenario, hem_category, yr)) |>
+  # A category absent from one ensemble member means zero acres, not a missing
+  # observation. Without this, mean()/sd() run over a short, upward-biased
+  # vector for categories that blink in and out across scenarios (Juncus
+  # Marshes and Salt Barrens in the coastal domain, mainly).
+  complete(
+    nesting(land_policy, accretion, slr_scenario, yr),
+    nesting(domain, hem_category),
+    fill = list(sum_acres = 0)
+  )
+
+domain_dat <- domain_ensemble |>
+  summarize(mean_acres = mean(sum_acres),
+            std_acres  = sd(sum_acres),
+            n_members  = n(),
+            .by = c(domain, land_policy, hem_category, yr))
+
+# Baseline is a single ensemble member, so sd() is NA there by construction.
+# build_hem_table() nulls the 2025 std column anyway; this just makes the
+# reason explicit rather than letting it look like a join failure.
+cat("  Ensemble members per domain/policy/year:\n")
+domain_dat |>
+  distinct(land_policy, yr, n_members) |>
+  arrange(yr, land_policy) |>
+  as.data.frame() |>
+  print(row.names = FALSE)
+cat("\n")
+
 # --- Baseline --------------------------------------------------------------
 baseline <- combined |>
   filter(land_policy == "baseline" & yr == 2025) |>
@@ -389,20 +426,50 @@ projections <- combined |>
   summarize(sum_acres = sum(acres),
             .by = c(unit, domain, land_policy, accretion, slr_scenario, hem_category, yr))
 
-# Envelope across accretion x SLR, by domain
-projection_summary <- projections |>
-  summarize(min = min(sum_acres),
-            max = max(sum_acres),
-            .by = c(unit, domain, hem_category, yr)) |>
-  summarize(sum_min = sum(min),
-            sum_max = sum(max),
-            .by = c(domain, hem_category, yr))
+# Envelope across the accretion x SLR ensemble, held separate by land policy.
+# Two distinct sources of variation are in play and pooling them makes the
+# range uninterpretable: land_policy (PD vs AM) is a decision, not an
+# uncertainty, while accretion x SLR is the uncertainty. Grouping by
+# land_policy means each row is the ensemble range for one policy, so the
+# PD/AM gap can be read against the width of the ensemble rather than being
+# absorbed into it.
+#
+# Taken from domain_ensemble for the same reason as the SD above: summing
+# per-unit minima would produce a floor no single ensemble member actually
+# realises, because different units bottom out under different members. The
+# envelope below is the range of realised domain totals.
+projection_summary <- domain_ensemble |>
+  filter(yr != 2025) |>
+  summarize(sum_min   = min(sum_acres),
+            sum_max   = max(sum_acres),
+            sum_mean  = mean(sum_acres),
+            n_members = n(),
+            .by = c(domain, land_policy, hem_category, yr))
+
+# --- Policy contrast, paired within ensemble member -------------------------
+# The complement to the above: isolate the policy effect by differencing AM
+# against PD WITHIN each accretion x SLR member, then summarising those
+# differences. Pairing matters - an unpaired AM mean minus PD mean carries the
+# full ensemble variance in both terms, whereas the paired difference cancels
+# the shared SLR/accretion signal and leaves the policy signal. std_diff here
+# is the spread of the policy effect itself, not the spread of the totals.
+policy_contrast <- domain_ensemble |>
+  filter(yr != 2025, land_policy %in% c("PD", "AM")) |>
+  pivot_wider(names_from = land_policy, values_from = sum_acres) |>
+  filter(!is.na(PD) & !is.na(AM)) |>
+  mutate(diff_acres = AM - PD) |>
+  summarize(mean_diff = mean(diff_acres),
+            std_diff  = sd(diff_acres),
+            min_diff  = min(diff_acres),
+            max_diff  = max(diff_acres),
+            n_pairs   = n(),
+            .by = c(domain, hem_category, yr)) |>
+  arrange(hem_category, domain, yr)
 
 # --- Change relative to baseline, by domain --------------------------------
 # This is the payoff: seagrass and open-water change in the coastal residual
 # was invisible in the basin-only summaries.
-domain_change <- all_data |>
-  summarize(mean_acres = sum(mean_acres), .by = c(domain, land_policy, hem_category, yr)) |>
+domain_change <- domain_dat |>
   left_join(
     baseline |> rename(baseline_acres = sum_acres),
     by = c("domain", "hem_category")
@@ -411,6 +478,8 @@ domain_change <- all_data |>
     delta_acres = mean_acres - baseline_acres,
     pct_change  = round(100 * delta_acres / baseline_acres, 1)
   ) |>
+  select(domain, hem_category, yr, land_policy,
+         baseline_acres, mean_acres, std_acres, delta_acres, pct_change) |>
   arrange(hem_category, domain, yr, land_policy)
 
 # ===========================================================================
@@ -507,12 +576,9 @@ render_hem_flextable <- function(tab, caption) {
 }
 
 # --- Table 1: Drainage Basin vs Coastal Waters -----------------------------
-domain_dat <- all_data |>
-  summarize(mean_acres = sum(mean_acres),
-            std_acres  = sqrt(sum(std_acres^2)),   # units treated as independent
-            .by = c(domain, land_policy, hem_category, yr))
-
-totab_domain <- build_hem_table(domain_dat, domain)
+# domain_dat comes from domain_ensemble in Part C - aggregated to domain
+# before mean()/sd(), not pooled from per-unit SDs.
+totab_domain <- build_hem_table(domain_dat |> select(-n_members), domain)
 
 tab_coastal <- totab_domain |> filter(domain == "Coastal Waters") |> select(-domain)
 tab_basin   <- totab_domain |> filter(domain == "Drainage Basin") |> select(-domain)
@@ -532,5 +598,6 @@ ft_coastal
 ft_basin
 ft_focal
 
-cat("\nDone. Objects of interest: combined, all_data, baseline, baseline_total,\n",
-    "projection_summary, domain_change, ft_basin, ft_coastal, ft_focal\n")
+cat("\nDone. Objects of interest: combined, all_data, domain_ensemble, domain_dat,\n",
+    "baseline, baseline_total, projection_summary, policy_contrast, domain_change,\n",
+    "ft_basin, ft_coastal, ft_focal\n")
