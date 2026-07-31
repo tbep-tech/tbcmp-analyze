@@ -12,18 +12,36 @@
 # (./data-raw/swfwmd/Drainage_Basin_Boundaries.shp) rather than pulled from
 # NHDPlus via nhdplusTools::get_huc(). No network call is required.
 #
-# REVISION - dissolve now includes HUC8
-# -------------------------------------
-# The previous version dissolved on EXTHUC + BASIN + FEATURE only. EXTHUC is
+# REVISION 1 - dissolve now includes HUC8
+# ---------------------------------------
+# The original version dissolved on EXTHUC + BASIN + FEATURE only. EXTHUC is
 # unique only WITHIN a HUC8, so that grouping merged basins across unrelated
 # watersheds: EXTHUC 99990000 / "DIRECT RUNOFF TO BAY" occurs 51 times across
 # five HUC8s, and 99999900 / "DIRECT RUNOFF TO GULF" 23 times, all collapsing
-# into single multipart units. Grouping on HUC + EXTHUC + BASIN + FEATURE
-# yields 1,069 units from 1,166 records; the old grouping gave 1,061.
+# into single multipart units.
 #
-# basin_id values have changed as a result (now HUC8_EXTHUC_BASIN_NAME). Any
-# CSVs written by the earlier version must be regenerated - they are not
-# joinable with output from this version.
+# REVISION 2 - FEATURE removed from the dissolve key
+# --------------------------------------------------
+# Revision 1 left FEATURE in the grouping while building basin_id from
+# HUC8 + EXTHUC + BASIN, so a group splitting on FEATURE alone produced two
+# rows with the same id. This raised:
+#
+#   Error: Duplicate basin_id values after dissolve:
+#          03100206_99990000_DIR_RUNOFF_TO_BAY
+#
+# FEATURE is now aggregated rather than grouped on, and basin_id is built from
+# exactly the columns in id_keys. Names are also normalized ("DIR RUNOFF" ->
+# "DIRECT RUNOFF", whitespace squished), which merges one further pair.
+# Resulting counts from 1,166 source records:
+#
+#   EXTHUC + BASIN + FEATURE          1,061 units  (original, incorrect)
+#   HUC8 + EXTHUC + BASIN + FEATURE   1,070 units  (revision 1, id collision)
+#   HUC8 + EXTHUC + BASIN             1,069 units  (revision 2)
+#   ... with name normalization       1,068 units  (default)
+#
+# basin_id values have changed (now HUC8_EXTHUC_BASIN_NAME). Any CSVs written
+# by an earlier version must be regenerated - they are not joinable with
+# output from this version.
 #
 # Tampa Bay Estuary Program / Tampa Bay Coastal Master Plan
 # ---------------------------------------------------------------------------
@@ -111,14 +129,58 @@ tbcmp_basins <- tbcmp_basins |>
     basin_feat = if (!is.na(feat_fld))   as.character(.data[[feat_fld]])   else NA_character_
   )
 
+# --- Normalize basin names --------------------------------------------------
+# The source layer carries abbreviation variants that split what is one unit:
+# "DIR RUNOFF TO BAY" (5 records) alongside "DIRECT RUNOFF TO BAY" (52), same
+# HUC8 and same EXTHUC. One name also has a doubled internal space
+# ("LEMMON STREET  DITCH"). Normalizing merges one pair of units in HUC8
+# 03100206 (1,069 -> 1,068). Set to FALSE to keep the source names verbatim.
+normalize_basin_names <- TRUE
+
+if (normalize_basin_names) {
+  n_before <- tbcmp_basins |>
+    st_drop_geometry() |>
+    distinct(basin_huc8, basin_huc, basin_name) |>
+    nrow()
+
+  tbcmp_basins <- tbcmp_basins |>
+    mutate(
+      basin_name = str_squish(basin_name),
+      basin_name = str_replace(basin_name, "^DIR\\s+RUNOFF", "DIRECT RUNOFF")
+    )
+
+  n_after <- tbcmp_basins |>
+    st_drop_geometry() |>
+    distinct(basin_huc8, basin_huc, basin_name) |>
+    nrow()
+
+  cat("  Name normalization merged", n_before - n_after, "unit(s)\n")
+}
+
 # --- Dissolve multipart records so each basin appears once ------------------
 # Mirrors the county dissolve in 01_data_prep.R. Prevents duplicate ids in the
 # output when a single basin is stored as several polygon records. HUC8 is
-# included in the grouping because EXTHUC is only unique within a HUC8 - see
-# the revision note in the header.
+# included because EXTHUC is only unique within a HUC8 - see the revision note
+# in the header.
+#
+# FEATURE is deliberately NOT a grouping key. It describes the hydrologic
+# feature type, not basin identity, and grouping on it while building basin_id
+# from HUC8 + EXTHUC + BASIN produces two rows sharing one id. That happens
+# once in the layer: HUC8 03100206 / EXTHUC 99990000 / "DIR RUNOFF TO BAY" has
+# four records tagged RUNOFF and one tagged BAY. The BAY tag is a mis-entry -
+# the actual bay is the separate "TAMPA BAY" record with the same EXTHUC - so
+# splitting on it would manufacture a spurious unit. Where a unit does span
+# multiple FEATURE values they are concatenated, keeping the information
+# visible in the output without fragmenting the unit.
+id_keys <- c("basin_huc8", "basin_huc", "basin_name")
+
 tbcmp_basins <- tbcmp_basins |>
-  group_by(basin_huc8, basin_huc, basin_name, basin_feat) |>
-  summarise(.groups = "drop") |>
+  group_by(across(all_of(id_keys))) |>
+  summarise(
+    basin_feat = paste(sort(unique(basin_feat)), collapse = "/"),
+    n_parts    = n(),
+    .groups    = "drop"
+  ) |>
   st_make_valid() |>
   mutate(
     basin_id = paste0(
@@ -130,11 +192,18 @@ tbcmp_basins <- tbcmp_basins |>
 
 cat("  Dissolved to", nrow(tbcmp_basins), "unique basin units\n")
 
-# Sanity check: basin_id must be unique after the dissolve
+# Sanity check: basin_id must be unique after the dissolve. If this fires, the
+# columns used to build basin_id have drifted from id_keys - reconcile the two
+# rather than making the id longer.
 if (any(duplicated(tbcmp_basins$basin_id))) {
-  dupes <- tbcmp_basins$basin_id[duplicated(tbcmp_basins$basin_id)]
-  stop("Duplicate basin_id values after dissolve: ",
-       paste(unique(dupes), collapse = ", "))
+  dupes <- tbcmp_basins |>
+    st_drop_geometry() |>
+    filter(basin_id %in% basin_id[duplicated(basin_id)]) |>
+    select(basin_id, all_of(id_keys), basin_feat, n_parts) |>
+    arrange(basin_id)
+  print(as.data.frame(dupes), row.names = FALSE)
+  stop("Duplicate basin_id values after dissolve (", nrow(dupes), " rows). ",
+       "basin_id must be built from exactly the columns in id_keys.")
 }
 
 # Keep only basins that intersect the project area
