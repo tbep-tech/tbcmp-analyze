@@ -75,6 +75,25 @@
 # is all NA. The script now detects and rebuilds these, but removing them is
 # faster than sampling each one.
 #
+# REVISION 5 - categorical rasters returned labels, not codes
+# -----------------------------------------------------------
+# After Revision 4 the zone raster was populated and extents overlapped, but
+# every tiff still produced zero rows, with:
+#
+#   Warning: In argument `value = as.numeric(as.character(value))`
+#            NAs introduced by coercion
+#
+# The HEM tiffs carry a raster attribute table, so crosstab() reported the
+# category LABELS ("Estuarine Open Water") rather than the numeric codes
+# (5400). Coercion turned every label into NA and filter(!is.na(value))
+# discarded the whole result.
+#
+# strip_categories() now detaches the RAT before counting so the underlying
+# integer codes come through, with to_hem_codes() falling back to a RAT
+# lookup and erroring - rather than returning NA - if a value still will not
+# resolve. Both the crosstab and exact paths are covered, and the attribute
+# table is archived once to data/output/basin/_hem_raster_attribute_table.csv.
+#
 # Tampa Bay Estuary Program / Tampa Bay Coastal Master Plan
 # ---------------------------------------------------------------------------
 
@@ -342,11 +361,14 @@ check_overlap <- function(basins, r, label = "") {
               bb[["ymin"]] < re[4] && bb[["ymax"]] > re[3]
 
   if (!overlaps) {
+    re_v <- as.vector(ext(r))
     cat("\n  EXTENT MISMATCH", label, "\n")
     cat("    raster CRS   :", crs_label(crs(r)), "\n")
     cat("    basins CRS   :", crs_label(st_crs(basins)$wkt), "\n")
-    cat("    raster extent:", paste(round(re, 1), collapse = ", "), "\n")
-    cat("    basins extent:", paste(round(as.vector(bb), 1), collapse = ", "), "\n")
+    cat(sprintf("    raster extent: xmin %.1f  ymin %.1f  xmax %.1f  ymax %.1f\n",
+                re_v[1], re_v[3], re_v[2], re_v[4]))
+    cat(sprintf("    basins extent: xmin %.1f  ymin %.1f  xmax %.1f  ymax %.1f\n",
+                bb[["xmin"]], bb[["ymin"]], bb[["xmax"]], bb[["ymax"]]))
   }
 
   overlaps
@@ -412,18 +434,76 @@ get_zone_raster <- function(r, basins) {
   z
 }
 
+# HEM tiffs ship with a raster attribute table. Any operation that reports
+# cell values then returns the category LABELS ("Estuarine Open Water")
+# instead of the numeric codes (5400). Detaching the RAT exposes the
+# underlying integer codes; this is a metadata edit on the in-memory
+# SpatRaster and does not rewrite the file on disk.
+strip_categories <- function(r) {
+  if (!any(is.factor(r))) return(list(r = r, rat = NULL))
+
+  rat <- try(cats(r)[[1]], silent = TRUE)
+  if (inherits(rat, "try-error")) rat <- NULL
+
+  levels(r) <- NULL
+
+  list(r = r, rat = rat)
+}
+
+# Recover numeric codes from label strings using the RAT, for the case where
+# a value still is not numeric after the RAT has been detached.
+codes_from_rat <- function(raw, rat) {
+  if (is.null(rat) || ncol(rat) < 2) return(rep(NA_real_, length(raw)))
+  lut <- suppressWarnings(as.numeric(rat[[1]]))
+  names(lut) <- as.character(rat[[2]])
+  unname(lut[raw])
+}
+
+# Coerce the crosstab value column to numeric HEM codes, failing loudly rather
+# than silently NA-ing rows out of the result.
+to_hem_codes <- function(raw, rat, context = "") {
+  raw <- as.character(raw)
+  num <- suppressWarnings(as.numeric(raw))
+
+  if (anyNA(num)) {
+    num[is.na(num)] <- codes_from_rat(raw[is.na(num)], rat)
+  }
+
+  if (anyNA(num)) {
+    bad <- unique(raw[is.na(num)])
+    stop("Could not resolve ", length(bad), " raster value(s) to numeric HEM ",
+         "codes", context, ": ",
+         paste(utils::head(bad, 8), collapse = ", "),
+         if (length(bad) > 8) ", ..." else "",
+         "\nThe raster attribute table may use a label column that does not ",
+         "map to codes. Inspect cats(rast(<tiff>)) and adjust codes_from_rat().")
+  }
+
+  num
+}
+
 # Streamed zonal counts via crosstab - no per-cell data enters R
 counts_crosstab <- function(r, z) {
+
+  sc  <- strip_categories(r)
+  r   <- sc$r
+  rat <- sc$rat
+
   x <- c(z, r)
   names(x) <- c("zone", "hem")
 
   ct <- crosstab(x, long = TRUE, useNA = FALSE)
+
+  if (ncol(ct) != 3) {
+    stop("crosstab() returned ", ncol(ct), " columns, expected 3 ",
+         "(zone, hem, Freq). Columns: ", paste(names(ct), collapse = ", "))
+  }
   names(ct) <- c("zone_idx", "value", "count")
 
   ct |>
     mutate(
       zone_idx = as.integer(as.character(zone_idx)),
-      value    = as.numeric(as.character(value)),
+      value    = to_hem_codes(value, rat, " (crosstab)"),
       count    = as.numeric(count)
     ) |>
     filter(!is.na(zone_idx), !is.na(value))
@@ -431,6 +511,11 @@ counts_crosstab <- function(r, z) {
 
 # Tiled exact_extract - partial-cell coverage, bounded memory per tile
 counts_exact <- function(r, basins) {
+
+  # Same RAT problem as crosstab: a categorical raster yields labels
+  sc  <- strip_categories(r)
+  r   <- sc$r
+  rat <- sc$rat
 
   out <- vector("list", nrow(basins))
 
@@ -479,7 +564,10 @@ counts_exact <- function(r, basins) {
     out[[i]] <- bind_rows(tile_out) |>
       group_by(value) |>
       summarise(count = sum(count, na.rm = TRUE), .groups = "drop") |>
-      mutate(zone_idx = poly$zone_idx)
+      mutate(
+        value    = to_hem_codes(value, rat, " (exact_extract)"),
+        zone_idx = poly$zone_idx
+      )
 
     rm(tile_out)
     if (i %% 50 == 0) invisible(gc())
@@ -535,6 +623,23 @@ for (tiff_file in geotiff_files) {
       "| CRS:", crs_label(crs(tbcmp_raster)),
       "| acres/cell:", signif(cell_acres, 6), "\n")
 
+  # Archive the raster attribute table once. Confirms the label -> code
+  # mapping used to recover numeric HEM values, and is worth eyeballing
+  # against data/hem_class_colors.csv.
+  if (any(is.factor(tbcmp_raster))) {
+    rat_file <- file.path(output_dir, "TBCMP_hem_raster_attribute_table.csv")
+    if (!file.exists(rat_file)) {
+      rat_out <- try(cats(tbcmp_raster)[[1]], silent = TRUE)
+      if (!inherits(rat_out, "try-error") && !is.null(rat_out)) {
+        write.csv(rat_out, rat_file, row.names = FALSE)
+        cat("  Categorical raster;", nrow(rat_out),
+            "categories written to", basename(rat_file), "\n")
+      }
+    } else {
+      cat("  Categorical raster; codes recovered from attribute table\n")
+    }
+  }
+
   if (method == "crosstab") {
 
     if (is.null(zone_r) || !compareGeom(zone_r, tbcmp_raster, stopOnError = FALSE)) {
@@ -562,13 +667,16 @@ for (tiff_file in geotiff_files) {
   # the overlap check above already passed. Stop rather than writing an empty
   # CSV that resume would then treat as complete on the next run.
   if (nrow(counts) == 0) {
+    re_v <- as.vector(ext(tbcmp_raster))
+    bb_v <- st_bbox(tbcmp_basins)
     cat("\n  DIAGNOSTIC\n")
     cat("    raster CRS   :", crs_label(crs(tbcmp_raster)), "\n")
     cat("    basins CRS   :", crs_label(st_crs(tbcmp_basins)$wkt), "\n")
-    cat("    raster extent:", paste(round(as.vector(ext(tbcmp_raster)), 1),
-                                    collapse = ", "), "\n")
-    cat("    basins extent:", paste(round(as.vector(st_bbox(tbcmp_basins)), 1),
-                                    collapse = ", "), "\n")
+    cat(sprintf("    raster extent: xmin %.1f  ymin %.1f  xmax %.1f  ymax %.1f\n",
+                re_v[1], re_v[3], re_v[2], re_v[4]))
+    cat(sprintf("    basins extent: xmin %.1f  ymin %.1f  xmax %.1f  ymax %.1f\n",
+                bb_v[["xmin"]], bb_v[["ymin"]], bb_v[["xmax"]], bb_v[["ymax"]]))
+    cat("    raster categorical:", any(is.factor(tbcmp_raster)), "\n")
     if (method == "crosstab") {
       cat("    zone raster populated:", zone_has_values(zone_r), "\n")
       cat("    zone raster file     :", sources(zone_r), "\n")
