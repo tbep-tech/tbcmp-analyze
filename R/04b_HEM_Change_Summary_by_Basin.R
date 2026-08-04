@@ -103,9 +103,11 @@ if (!file.exists(coastal_rda) || force_rebuild) {
   base_raster <- rast(here("data/tbcmp_base_raster_10m.tif"))
   prj         <- crs(base_raster)
 
+  # Kept as an sfc, not an sf. Only its geometry is ever used, and st_as_sf()
+  # on a bare sfc would name the column "x" - the same trap that broke the
+  # residual below.
   aoi <- st_bbox(base_raster) |>
     st_as_sfc() |>
-    st_as_sf() |>
     st_set_crs(prj)
 
   aoi_acres <- as.numeric(st_area(aoi)) * 0.000247105
@@ -124,7 +126,7 @@ if (!file.exists(coastal_rda) || force_rebuild) {
     st_union() |>
     st_make_valid()
 
-  basins_in_aoi <- st_intersection(basins_u, st_geometry(aoi))
+  basins_in_aoi <- st_intersection(basins_u, aoi)
   basin_acres   <- as.numeric(st_area(basins_in_aoi)) * 0.000247105
   cat("  Drainage basins within AOI:", format(round(basin_acres), big.mark = ","),
       "acres (", round(100 * basin_acres / aoi_acres, 1), "%)\n")
@@ -135,12 +137,17 @@ if (!file.exists(coastal_rda) || force_rebuild) {
   # part. Differencing TIGER county lines (a different source at a different
   # scale) against USGS-quad basin lines would generate thousands of shoreline
   # slivers instead.
-  coastal_raw <- st_difference(st_geometry(aoi), basins_u) |>
+  coastal_raw <- st_difference(aoi, basins_u) |>
     st_make_valid()
 
+  # st_sf(geometry = ...) rather than st_as_sf(): st_as_sf() on a bare sfc
+  # names the geometry column "x", so a later st_area(geometry) fails with
+  # "object 'geometry' not found" and bind_rows() cannot align the parts.
+  # Naming it here is what keeps every downstream sf consistent.
   coastal_parts <- coastal_raw |>
-    st_cast("POLYGON", warn = FALSE) |>
-    st_as_sf() |>
+    st_cast("POLYGON", warn = FALSE)
+
+  coastal_parts <- st_sf(geometry = coastal_parts) |>
     mutate(part_acres = as.numeric(st_area(geometry)) * 0.000247105)
 
   dropped <- coastal_parts |> filter(part_acres < min_part_acres)
@@ -169,20 +176,36 @@ if (!file.exists(coastal_rda) || force_rebuild) {
     ) |>
     select(unit_id, unit_name, unit_huc, unit_feat)
 
-  offshore <- st_difference(
+  offshore_geom <- st_difference(
     st_union(st_geometry(coastal_parts)),
     st_union(st_geometry(tbcmp_cnt))
   ) |>
-    st_make_valid() |>
-    st_as_sf() |>
-    rename(geometry = 1) |>
-    mutate(
-      unit_id   = "COASTAL_Offshore",
-      unit_name = "Offshore Gulf Waters",
-      unit_huc  = NA_character_,
-      unit_feat = "COASTAL"
-    ) |>
-    select(unit_id, unit_name, unit_huc, unit_feat)
+    st_make_valid()
+
+  # If the counties cover the whole residual there is no offshore unit; an
+  # empty sfc would otherwise fall over in st_sf()
+  offshore_geom <- offshore_geom[!st_is_empty(offshore_geom)]
+
+  if (length(offshore_geom) > 0) {
+    offshore <- st_sf(geometry = offshore_geom) |>
+      mutate(
+        unit_id   = "COASTAL_Offshore",
+        unit_name = "Offshore Gulf Waters",
+        unit_huc  = NA_character_,
+        unit_feat = "COASTAL"
+      ) |>
+      select(unit_id, unit_name, unit_huc, unit_feat)
+  } else {
+    cat("  No offshore residual outside the county layer\n")
+    offshore <- coastal_cnt[0, ]
+  }
+
+  # Geometry columns must share a name for bind_rows() to align them; both
+  # sides are called "geometry" because of the st_sf() calls above.
+  stopifnot(
+    attr(coastal_cnt, "sf_column") == "geometry",
+    attr(offshore, "sf_column") == "geometry"
+  )
 
   tbcmp_coastal <- bind_rows(coastal_cnt, offshore) |>
     filter(!st_is_empty(geometry)) |>
@@ -253,9 +276,12 @@ for (tiff_file in geotiff_files) {
     single_poly <- coastal_sub[i, ]
     cat("  Unit", i, "of", nrow(coastal_sub), ":", single_poly$unit_id, "\n")
 
-    # Tile the polygon so no single exact_extract() call blows out memory
-    tiles <- st_make_grid(single_poly, cellsize = tile_size_m) |>
-      st_as_sf() |>
+    # Tile the polygon so no single exact_extract() call blows out memory.
+    # st_sf() again rather than st_as_sf(), for the same geometry-naming
+    # reason as Part A - these tiles are only accessed via st_geometry()
+    # today, but the inconsistency is a trap waiting for the next edit.
+    tiles <- st_make_grid(single_poly, cellsize = tile_size_m)
+    tiles <- st_sf(geometry = tiles) |>
       st_filter(single_poly) |>
       st_intersection(st_geometry(single_poly)) |>
       st_make_valid()
