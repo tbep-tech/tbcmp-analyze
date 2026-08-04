@@ -1,0 +1,494 @@
+---
+title: "HEM Land Use Change Summary by Drainage Basin"
+author: "Tampa Bay Estuary Program"
+date: "`r Sys.Date()`"
+format:
+  html:
+    theme: cosmo
+    code-tools: 
+      source: https://github.com/tbep-tech/tbcmp-analyze/blob/main/docs/hemchange_basins.qmd
+    css: tbcmp-brand.css
+toc: true
+toc-depth: 2
+lightbox: true
+execute:
+  echo: false
+  warning: false
+---
+
+```{r}
+#| include: false
+library(here)
+library(tidyverse)
+library(flextable)
+library(ftExtra)
+library(rlang)
+
+# ---------------------------------------------------------------------------
+# Inputs
+#
+# Basin summaries come from 03c_process_tiffs_basins.R, coastal summaries from
+# 04b_HEM_Change_Summary_by_Basin.R Part B, and the 2025 baseline for both from
+# 03d_process_baseline_basins.R.
+# ---------------------------------------------------------------------------
+basin_dir <- here("data/output/basin/")
+coast_dir <- here("data/output/coastal/")
+
+read_summaries <- function(dir, domain_label) {
+  files <- list.files(dir, pattern = "_summary\\.csv$", full.names = TRUE)
+  if (length(files) == 0) {
+    return(tibble())
+  }
+  files |>
+    lapply(read.csv) |>
+    bind_rows() |>
+    mutate(domain = domain_label)
+}
+
+# HEM recode. Labels are copied verbatim from hemchange.qmd so the county and
+# basin documents stay directly comparable. They differ deliberately from
+# ClassName in the raster attribute table ("High Marshes" vs "High Salt
+# Marsh"); do not reconcile one without the other.
+hem_recode <- function(value) {
+  case_when(
+    value %in% c(1100, 1200)                   ~ "Upland Developed - Hard",
+    value %in% c(1800, 1820, 2100, 2200, 2400) ~ "Upland Developed - Soft",
+    value %in% c(1900, 3200, 4100, 4400)       ~ "Upland Undeveloped",
+    value %in% c(5200)                         ~ "Open Freshwater",
+    value %in% c(5400)                         ~ "Open Water",
+    value %in% c(6110, 6410)                   ~ "Freshwater Marsh & Wetlands",
+    value %in% c(6120)                         ~ "Mangroves",
+    value %in% c(6420)                         ~ "High Marshes",
+    value %in% c(6425)                         ~ "Juncus Marshes",
+    value %in% c(6600)                         ~ "Salt Barrens",
+    value %in% c(7100)                         ~ "Beach - Dune",
+    value %in% c(6510)                         ~ "Subtidal - Tidal Flats",
+    value %in% c(9113)                         ~ "Subtidal - Seagrass",
+    TRUE                                       ~ NA_character_
+  )
+}
+
+combined <- bind_rows(
+  read_summaries(basin_dir, "Drainage Basin"),
+  read_summaries(coast_dir, "Coastal Waters")
+) |>
+  filter(value != 0 & !is.na(value)) |>
+  mutate(
+    hem_category = hem_recode(value),
+    unit         = id,
+    huc8         = case_when(
+      domain == "Coastal Waters" ~ "Coastal",
+      TRUE                       ~ as.character(basin_huc8)
+    )
+  ) |>
+  filter(!is.na(hem_category))
+
+# set colors and precision
+cols      <- c('darkgreen', 'red')
+precision <- 1
+
+# ---------------------------------------------------------------------------
+# Ensemble aggregation
+#
+# Anything summarised ABOVE the unit level has to be summed within each
+# accretion x SLR member before mean() and sd() are taken. The county document
+# does not need this because a county IS the unit; here a HUC8 or a domain is a
+# rollup of many basins, and pooling their individual SDs would treat units as
+# varying independently when in fact every basin in the rollup sees the same
+# SLR curve. sd() over the vector of realised rollup totals is the spread of
+# the number actually printed in the table.
+#
+# complete() fills zeros because a category absent from one member means zero
+# acres, not a missing observation - without it mean() runs over a short,
+# upward-biased vector for categories that blink in and out across scenarios.
+# ---------------------------------------------------------------------------
+ensemble_summary <- function(dat, group_cols) {
+
+  member_cols <- c("land_policy", "accretion", "slr_scenario", "yr")
+
+  dat |>
+    summarize(
+      sum_acres = sum(acres),
+      .by = all_of(c(group_cols, member_cols, "hem_category"))
+    ) |>
+    complete(
+      nesting(!!!syms(member_cols)),
+      nesting(!!!syms(c(group_cols, "hem_category"))),
+      fill = list(sum_acres = 0)
+    ) |>
+    summarize(
+      mean_acres = mean(sum_acres),
+      std_acres  = sd(sum_acres),
+      .by = all_of(c(group_cols, "land_policy", "hem_category", "yr"))
+    )
+}
+
+# ---------------------------------------------------------------------------
+# Table construction
+#
+# Scenario columns are derived from the data rather than hard-coded, so a
+# missing accretion or SLR run drops a column instead of erroring out of the
+# pivot. Ordering is year ascending, PD before AM within each year, matching
+# hemchange.qmd.
+# ---------------------------------------------------------------------------
+scen <- combined |>
+  filter(land_policy != "baseline") |>
+  distinct(land_policy, yr) |>
+  arrange(yr, desc(land_policy)) |>
+  mutate(key = paste(land_policy, yr, sep = "_"))
+
+scen_keys <- scen$key
+scen_yrs  <- unique(scen$yr)
+
+build_tab <- function(dat, group_col) {
+
+  gcol <- group_col
+
+  totab <- dat |>
+    ungroup() |>
+    pivot_longer(cols = c(mean_acres, std_acres),
+                 names_to = "statistic", values_to = "acres") |>
+    unite("land_policy_yr", land_policy, yr, sep = "_")
+
+  totabave <- totab |>
+    filter(statistic == "mean_acres") |>
+    select(-statistic) |>
+    pivot_wider(names_from = land_policy_yr, values_from = acres,
+                names_sort = TRUE, values_fill = 0)
+
+  totabstd <- totab |>
+    filter(statistic == "std_acres") |>
+    select(-statistic) |>
+    pivot_wider(names_from = land_policy_yr, values_from = acres,
+                names_sort = TRUE, values_fill = 0)
+
+  # Direction of change against baseline, one colour column per scenario
+  totabcol <- totabave |>
+    pivot_longer(cols = all_of(scen_keys),
+                 names_to = "scenario", values_to = "mean_acres") |>
+    mutate(
+      col = sign(mean_acres - baseline_2025),
+      col = case_when(col == 1 ~ cols[1], col == -1 ~ cols[2], TRUE ~ "black"),
+      scenario = paste0(scenario, "_col")
+    ) |>
+    select(all_of(c(gcol, "hem_category", "scenario", "col"))) |>
+    pivot_wider(names_from = scenario, values_from = col, names_sort = TRUE)
+
+  totabave |>
+    left_join(totabstd, by = c(gcol, "hem_category"),
+              suffix = c("_mean", "_std")) |>
+    pivot_longer(cols = c(ends_with("_mean"), ends_with("_std")),
+                 names_to = c("land_policy", "yr", "statistic"),
+                 names_pattern = "(.*)_(.*)_(.*)", values_to = "acres") |>
+    mutate(
+      acres = round(acres, precision),
+      acres = case_when(yr == 2025 & statistic == "std" ~ NA_real_,
+                        TRUE ~ acres)
+    ) |>
+    pivot_wider(names_from = statistic, values_from = acres) |>
+    mutate(
+      mean = case_when(!is.na(mean) ~ format(mean, big.mark = ",", scientific = FALSE),
+                       TRUE ~ NA_character_),
+      std  = case_when(!is.na(std)  ~ format(std,  big.mark = ",", scientific = FALSE),
+                       TRUE ~ NA_character_)
+    ) |>
+    unite("mean_std_acres", mean, std, sep = " ± ", na.rm = TRUE) |>
+    unite("policy_yr", land_policy, yr, sep = "_") |>
+    mutate(policy_yr = factor(policy_yr, levels = c("baseline_2025", scen_keys))) |>
+    pivot_wider(names_from = policy_yr, values_from = mean_std_acres,
+                names_sort = TRUE, values_fill = "0") |>
+    left_join(totabcol, by = c(gcol, "hem_category"), suffix = c("", "_col")) |>
+    arrange(hem_category)
+}
+
+tab_fun <- function(totab, group_col, group_value) {
+
+  sub_dat <- totab |>
+    filter(.data[[group_col]] == group_value) |>
+    select(-all_of(group_col))
+
+  if (nrow(sub_dat) == 0) {
+    return(flextable(data.frame(Note = "No data for this unit")) |> autofit())
+  }
+
+  col_keys <- c("hem_category", "baseline_2025", scen_keys)
+
+  # Header row pairs the policies under each year. Built from scen_yrs so an
+  # incomplete scenario set still produces a valid header.
+  yr_header <- c("", "")
+  for (y in scen_yrs) {
+    yr_header <- c(yr_header, rep(as.character(y), sum(scen$yr == y)))
+  }
+
+  hdr_labels <- c("HEM Category", "Baseline",
+                  sub("_\\d+$", "", scen_keys))
+  names(hdr_labels) <- col_keys
+
+  ft <- flextable(sub_dat, col_keys = col_keys) |>
+    add_header_row(values = yr_header) |>
+    set_header_labels(values = as.list(hdr_labels))
+
+  # Merge each year's pair of policy columns in the top header row
+  pos <- 3
+  for (y in scen_yrs) {
+    n <- sum(scen$yr == y)
+    if (n > 1) ft <- merge_at(ft, i = 1, j = pos:(pos + n - 1), part = "header")
+    pos <- pos + n
+  }
+
+  ft |>
+    color(j = scen_keys,
+          color = unlist(sub_dat[paste0(scen_keys, "_col")], use.names = FALSE)) |>
+    autofit()
+}
+
+# ---------------------------------------------------------------------------
+# Rollups
+# ---------------------------------------------------------------------------
+dat_domain  <- ensemble_summary(combined, "domain")
+dat_total   <- ensemble_summary(combined |> mutate(all = "All"), "all")
+dat_huc8    <- ensemble_summary(filter(combined, domain == "Drainage Basin"), "huc8")
+dat_coastal <- ensemble_summary(filter(combined, domain == "Coastal Waters"), "unit")
+dat_feat    <- ensemble_summary(filter(combined, domain == "Drainage Basin"), "basin_feat")
+dat_unit    <- ensemble_summary(filter(combined, domain == "Drainage Basin"), "unit")
+
+tab_domain  <- build_tab(dat_domain,  "domain")
+tab_total   <- build_tab(dat_total,   "all")
+tab_huc8    <- build_tab(dat_huc8,    "huc8")
+tab_coastal <- build_tab(dat_coastal, "unit")
+tab_feat    <- build_tab(dat_feat,    "basin_feat")
+tab_unit    <- build_tab(dat_unit,    "unit")
+
+# --- Tab labels -------------------------------------------------------------
+# HUC8 tabs are labelled with the code plus the two largest basins inside them,
+# derived from the data. Formal watershed names are not carried in the SWFWMD
+# layer, and deriving the label means it cannot go stale or be wrong. To use
+# formal names instead, populate huc8_names below as c("03100206" = "Tampa
+# Bay", ...) and the label will switch over.
+huc8_names <- c()
+
+huc8_index <- combined |>
+  filter(domain == "Drainage Basin", land_policy == "baseline") |>
+  summarize(acres = sum(acres), .by = c(huc8, basin_name)) |>
+  arrange(huc8, desc(acres)) |>
+  summarize(
+    top_basins = paste(head(basin_name, 2), collapse = ", "),
+    acres      = sum(acres),
+    n_basins   = n(),
+    .by = huc8
+  ) |>
+  mutate(
+    label = if (length(huc8_names)) {
+      coalesce(unname(huc8_names[huc8]), huc8)
+    } else {
+      paste0(huc8, " \u2014 ", str_to_title(top_basins))
+    }
+  ) |>
+  arrange(desc(acres))
+
+coastal_index <- combined |>
+  filter(domain == "Coastal Waters", land_policy == "baseline") |>
+  summarize(acres = sum(acres), label = first(basin_name), .by = unit) |>
+  arrange(desc(acres))
+
+# Largest basins only - 465 basins carry data, far too many to tab through
+n_top <- 12
+
+basin_index <- combined |>
+  filter(domain == "Drainage Basin", land_policy == "baseline") |>
+  summarize(acres = sum(acres),
+            label = paste0(str_to_title(first(basin_name)),
+                           " (", first(basin_huc8), ")"),
+            .by = unit) |>
+  arrange(desc(acres)) |>
+  head(n_top)
+
+# --- Reconciliation ---------------------------------------------------------
+recon <- combined |>
+  filter(land_policy == "baseline") |>
+  summarize(acres = sum(acres), .by = domain)
+
+n_basins  <- n_distinct(filter(combined, domain == "Drainage Basin")$unit)
+n_coastal <- n_distinct(filter(combined, domain == "Coastal Waters")$unit)
+
+fmt <- function(x) format(round(x), big.mark = ",")
+```
+
+Habitat and Ecosystem Model (HEM) projections summarized by
+**SWFWMD/FDEP drainage basin** rather than by county. Each table gives mean
+acres across the accretion × sea level rise ensemble, ± one standard
+deviation, under protect existing development (PD) and allowing habitats 
+to migrate (AM) land policy. Values in <span style="color:darkgreen">**green**</span> 
+are above the 2025 baseline; values in <span style="color:red">**red**</span> 
+are below it.
+
+A county-based version of these results is available in
+[hemchange.qmd](hemchange.html).
+
+::: {.callout-note collapse="true"}
+## Coastal waters and why they are reported separately
+
+The drainage basin layer covers `r fmt(recon$acres[recon$domain == "Drainage Basin"])`
+acres of the project area. The remaining
+`r fmt(recon$acres[recon$domain == "Coastal Waters"])` acres are open Gulf and
+nearshore waters with no basin assignment, carried here as a separate
+**Coastal Waters** domain derived by differencing the project extent against
+the dissolved basin layer.
+
+Reporting only the basins would silently drop that area, and it is
+disproportionately Open Water and Subtidal - Seagrass — precisely where sea
+level rise drives change. Note that Tampa Bay itself is *not* part of the
+coastal residual; it is carried in the basin layer as a `BAY` feature, as are
+Sarasota Bay and Boca Ciega Bay.
+
+Totals: `r n_basins` drainage basins and `r n_coastal` coastal units,
+`r fmt(sum(recon$acres))` acres combined.
+:::
+
+# Project area totals
+
+::: {.panel-tabset .nav-pills}
+
+## All areas
+
+```{r}
+tab_fun(tab_total, "all", "All")
+```
+
+## Drainage basins
+
+```{r}
+tab_fun(tab_domain, "domain", "Drainage Basin")
+```
+
+## Coastal waters
+
+```{r}
+tab_fun(tab_domain, "domain", "Coastal Waters")
+```
+
+:::
+
+# By watershed (HUC8)
+
+Drainage basins grouped by eight-digit hydrologic unit, ordered by area. Tab
+labels name the two largest basins in each unit.
+
+::: {.panel-tabset .nav-pills}
+
+```{r}
+#| output: asis
+for (i in seq_len(nrow(huc8_index))) {
+  cat("\n## ", huc8_index$label[i], "\n\n", sep = "")
+  cat(knitr::knit_child(
+    text = c(
+      "```{r}",
+      paste0("tab_fun(tab_huc8, 'huc8', '", huc8_index$huc8[i], "')"),
+      "```"
+    ),
+    quiet = TRUE
+  ), sep = "\n")
+}
+```
+
+:::
+
+# Coastal waters
+
+Residual project area outside the drainage basin layer, attributed to the
+county whose limits it falls within, with the remainder offshore.
+
+::: {.panel-tabset .nav-pills}
+
+```{r}
+#| output: asis
+for (i in seq_len(nrow(coastal_index))) {
+  cat("\n## ", coastal_index$label[i], "\n\n", sep = "")
+  cat(knitr::knit_child(
+    text = c(
+      "```{r}",
+      paste0("tab_fun(tab_coastal, 'unit', '", coastal_index$unit[i], "')"),
+      "```"
+    ),
+    quiet = TRUE
+  ), sep = "\n")
+}
+```
+
+:::
+
+# By hydrologic feature type
+
+Basins grouped by the `FEATURE` attribute of the source layer. `BAY` units
+carry the open estuarine water that would otherwise be mistaken for part of
+the coastal residual.
+
+::: {.panel-tabset .nav-pills}
+
+```{r}
+#| output: asis
+feat_index <- combined |>
+  filter(domain == "Drainage Basin", land_policy == "baseline") |>
+  summarize(acres = sum(acres), .by = basin_feat) |>
+  arrange(desc(acres))
+
+for (i in seq_len(nrow(feat_index))) {
+  cat("\n## ", feat_index$basin_feat[i], "\n\n", sep = "")
+  cat(knitr::knit_child(
+    text = c(
+      "```{r}",
+      paste0("tab_fun(tab_feat, 'basin_feat', '", feat_index$basin_feat[i], "')"),
+      "```"
+    ),
+    quiet = TRUE
+  ), sep = "\n")
+}
+```
+
+:::
+
+# Largest individual basins
+
+`r n_basins` basins carry data, too many to present individually. The
+`r n_top` largest by baseline acreage are shown; per-basin values for the full
+set are in `data/output/basin/`.
+
+::: {.panel-tabset .nav-pills}
+
+```{r}
+#| output: asis
+for (i in seq_len(nrow(basin_index))) {
+  cat("\n## ", basin_index$label[i], "\n\n", sep = "")
+  cat(knitr::knit_child(
+    text = c(
+      "```{r}",
+      paste0("tab_fun(tab_unit, 'unit', '", basin_index$unit[i], "')"),
+      "```"
+    ),
+    quiet = TRUE
+  ), sep = "\n")
+}
+```
+
+:::
+
+# Notes on the numbers
+
+**Standard deviations are computed at the level they are reported.** For any
+rollup above a single basin, acres are summed within each accretion × sea
+level rise combination first, and the standard deviation is taken across those
+ensemble totals. Pooling the individual basins' standard deviations would
+assume the basins vary independently, which they do not — every basin in a
+watershed sees the same sea level curve — and would overstate the spread.
+
+**Zero-filling.** Where a habitat category is absent from one ensemble member
+it is treated as zero acres rather than as a missing observation, so means are
+taken over the full set of members.
+
+**Baseline** is the 2025 condition from `data/tbcmp_hem_filled.tif`, processed
+through the same zonal routine as the scenarios.
+
+**Boundary cells.** Basin summaries count whole cells assigned to the basin
+containing the cell centre; the coastal summaries use partial-cell coverage
+fractions. At 2 m resolution the difference is immaterial at these areas, but
+it means basin and coastal acreages are not derived by identical methods.
