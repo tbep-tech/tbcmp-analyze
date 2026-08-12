@@ -314,7 +314,7 @@ n_coastal <- n_distinct(filter(combined, domain == "Coastal Waters")$unit)
 fmt <- function(x) format(round(x), big.mark = ",")
 ```
 
-Habitat and Ecosystem Model (HEM) projections summarized by
+Habitat Evolution Model (HEM) projections summarized by
 **SWFWMD/FDEP drainage basin** rather than by county. Each table gives mean
 acres across the accretion × sea level rise ensemble, ± one standard
 deviation, under protect existing development (PD) and allowing habitats 
